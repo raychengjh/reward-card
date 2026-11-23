@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reward Card</title>
+  <title>Friends &amp; Family 50-Stamp Reward Card</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -126,6 +126,7 @@
       <div class="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#a6442c]">
         <i data-lucide="shield-check" class="w-4 h-4"></i>
         <span>Admin Mode</span>
+        <span id="saveStatusBadge" class="hidden text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#e6f6ee] text-[#236347]">Saved</span>
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <a id="openSheetLink" href="https://docs.google.com/spreadsheets/d/1DODwm37VwCdAufezpVz1Sa2sDWHqMPtMeS1bdWiPLEc/edit?usp=drivesdk" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#2e7d5b] text-white hover:bg-[#236347] transition">
@@ -258,7 +259,7 @@
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
-      <p class="text-xs sm:text-sm text-[#76655d] mb-4">Enter the admin password to unlock organizer controls.</p>
+      <p class="text-xs sm:text-sm text-[#76655d] mb-4">Enter the admin password to add stamps and manage rewards.</p>
       <form id="adminLoginForm" class="space-y-3">
         <div>
           <label for="adminPasswordInput" class="block text-xs font-semibold text-[#5a4a42] mb-1">Password</label>
@@ -281,7 +282,7 @@
           <div class="w-9 h-9 rounded-xl bg-[#fdf1eb] text-[#c85a3f] flex items-center justify-center font-extrabold text-sm" id="modalStampNum">#1</div>
           <div>
             <h3 class="text-base font-bold text-[#2c221e]" id="modalStampTitle">Stamp Details</h3>
-            <p class="text-xs text-[#76655d]">Local preview edit — update your Sheet to sync to all viewers.</p>
+            <p class="text-xs text-[#76655d]">Changes save directly to your connected Sheet.</p>
           </div>
         </div>
         <button id="closeStampModalBtn" type="button" class="p-1.5 rounded-lg text-[#8c786e] hover:bg-[#f6ede5]">
@@ -384,8 +385,8 @@
   <!-- Reset Confirmation Modal (Admin only) -->
   <div id="resetModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-[#eadfd6]">
-      <h3 class="text-base font-bold text-[#2c221e] mb-2">Reset Preview Stamps?</h3>
-      <p class="text-sm text-[#76655d] mb-5">This clears the local preview stamps back to 0 / 50 (it does not delete stamps in your Sheet).</p>
+      <h3 class="text-base font-bold text-[#2c221e] mb-2">Reset All Stamps?</h3>
+      <p class="text-sm text-[#76655d] mb-5">This clears all 50 stamps and claimed statuses back to 0 / 50 (including in your Sheet when connected).</p>
       <div class="flex justify-end gap-2">
         <button id="cancelResetBtn" type="button" class="px-3.5 py-2 rounded-xl text-sm font-semibold text-[#76655d] hover:bg-[#f6ede5] transition">Cancel</button>
         <button id="confirmResetBtn" type="button" class="px-4 py-2 rounded-xl text-sm font-semibold bg-[#b44b32] text-white hover:bg-[#933a24] transition">Yes, Reset Card</button>
@@ -401,12 +402,15 @@
   <script>
     (function () {
       // =========================================================
-      // SETTINGS — Change ADMIN_PASSWORD to any password you like
+      // SETTINGS
+      // 1. Change ADMIN_PASSWORD to match your Apps Script password
+      // 2. Paste your deployed Google Apps Script Web App URL below
       // =========================================================
       const ADMIN_PASSWORD = 'admin123';
+      const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwYMKEjgMXWea7iMa5KsJT5YZB1RyEcEA2Z8eys58U5bXwXj7Sfyk6pvHRHhQDMGBs/exec';
       const SHEET_ID = '1DODwm37VwCdAufezpVz1Sa2sDWHqMPtMeS1bdWiPLEc';
       const TOTAL_STAMPS = 50;
-      const STORAGE_KEY = 'ff_reward_card_v3';
+      const STORAGE_KEY = 'ff_reward_card_v4';
 
       const DEFAULT_STATE = {
         title: 'Friends & Family Reward Card',
@@ -421,11 +425,12 @@
           25: false,
           50: false
         },
-        stamps: {} // { "1": { date: "YYYY-MM-DD", by: "", note: "" } }
+        stamps: {}
       };
 
       let state = loadInitialState();
       let isAdmin = false;
+      let activePassword = '';
       let editingStampIndex = null;
       let lastStampedIndex = null;
       let toastTimer = null;
@@ -460,7 +465,7 @@
           const saved = localStorage.getItem(STORAGE_KEY);
           if (saved) return normalizeState(JSON.parse(saved));
         } catch (e) {
-          // Storage blocked in restricted contexts; fall back to in-memory default
+          // Storage blocked; fall back to default
         }
         return normalizeState(DEFAULT_STATE);
       }
@@ -470,6 +475,54 @@
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         } catch (e) {
           // Ignore storage errors safely
+        }
+      }
+
+      function setSaveBadge(status, label) {
+        const badge = document.getElementById('saveStatusBadge');
+        if (!badge) return;
+        if (!status) {
+          badge.classList.add('hidden');
+          return;
+        }
+        badge.classList.remove('hidden');
+        badge.textContent = label;
+        if (status === 'saving') {
+          badge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#fef6e4] text-[#a36f0f]';
+        } else if (status === 'saved') {
+          badge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#e6f6ee] text-[#236347]';
+        } else {
+          badge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#fdece8] text-[#b44b32]';
+        }
+      }
+
+      async function saveToSheet(payload) {
+        if (!APPS_SCRIPT_URL || !APPS_SCRIPT_URL.trim()) {
+          setSaveBadge('error', 'Sync URL not set');
+          showToast('Paste your Apps Script URL into APPS_SCRIPT_URL to save directly to your Sheet.');
+          return false;
+        }
+
+        setSaveBadge('saving', 'Saving...');
+        try {
+          const res = await fetch(APPS_SCRIPT_URL.trim(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              password: activePassword || ADMIN_PASSWORD,
+              ...payload
+            })
+          });
+          const data = await res.json();
+          if (!res.ok || !data || !data.ok) {
+            throw new Error((data && data.error) || 'Failed to save to Sheet.');
+          }
+          setSaveBadge('saved', 'Saved to Sheet');
+          return true;
+        } catch (err) {
+          setSaveBadge('error', 'Save failed');
+          showToast('Could not save to Sheet. Check your Apps Script URL and password.');
+          return false;
         }
       }
 
@@ -654,7 +707,7 @@
         toastTimer = setTimeout(() => {
           el.classList.add('opacity-0', 'translate-y-3');
           el.classList.remove('opacity-100', 'translate-y-0');
-        }, 2500);
+        }, 2800);
       }
 
       function triggerCelebration(isGiant) {
@@ -711,7 +764,9 @@
           adminToolbar.classList.remove('hidden');
           adminToggleBtn.classList.add('hidden');
           organizerActions.classList.remove('hidden');
-          gridHint.textContent = 'Admin preview: tap circles to test animations, or click Open Sheet above to save stamps for everyone.';
+          gridHint.textContent = APPS_SCRIPT_URL
+            ? 'Admin mode: tap any circle to stamp or edit — changes save directly to your Sheet.'
+            : 'Admin mode: paste your Apps Script URL into APPS_SCRIPT_URL to save directly from here.';
         } else {
           adminToolbar.classList.add('hidden');
           adminToggleBtn.classList.remove('hidden');
@@ -790,10 +845,11 @@
         container.querySelectorAll('[data-claim-target]').forEach((btn) => {
           btn.addEventListener('click', () => {
             const target = Number(btn.getAttribute('data-claim-target'));
-            state.claimed[target] = !state.claimed[target];
+            const nextVal = !state.claimed[target];
+            state.claimed[target] = nextVal;
             persistState();
             renderAll();
-            showToast(state.claimed[target] ? `${state.prizes[target]} marked as claimed.` : `${state.prizes[target]} marked unclaimed.`);
+            saveToSheet({ action: 'setClaimed', target, claimed: nextVal });
           });
         });
       }
@@ -862,12 +918,14 @@
         if (!existing) {
           if (!isAdmin) return;
           const prevCount = getStampCount();
-          state.stamps[key] = { date: todayISO(), by: '', note: '' };
+          const newEntry = { date: todayISO(), by: '', note: '' };
+          state.stamps[key] = newEntry;
           lastStampedIndex = idx;
           persistState();
           const nextCount = getStampCount();
           renderAll();
           checkMilestoneCelebration(prevCount, nextCount);
+          saveToSheet({ action: 'setStamp', stamp: idx, stamped: true, ...newEntry });
         } else {
           if (!isAdmin) {
             const details = [
@@ -959,6 +1017,7 @@
         const entered = document.getElementById('adminPasswordInput').value;
         if (entered === ADMIN_PASSWORD) {
           isAdmin = true;
+          activePassword = entered;
           closeAdminModal();
           renderAll();
           showToast('Admin mode unlocked.');
@@ -971,6 +1030,8 @@
 
       document.getElementById('lockAdminBtn').addEventListener('click', () => {
         isAdmin = false;
+        activePassword = '';
+        setSaveBadge(null, '');
         renderAll();
         showToast('Admin mode locked.');
       });
@@ -980,12 +1041,14 @@
         for (let i = 1; i <= TOTAL_STAMPS; i++) {
           if (!state.stamps[String(i)]) {
             const prev = getStampCount();
-            state.stamps[String(i)] = { date: todayISO(), by: '', note: '' };
+            const newEntry = { date: todayISO(), by: '', note: '' };
+            state.stamps[String(i)] = newEntry;
             lastStampedIndex = i;
             persistState();
             const next = getStampCount();
             renderAll();
             checkMilestoneCelebration(prev, next);
+            saveToSheet({ action: 'setStamp', stamp: i, stamped: true, ...newEntry });
             return;
           }
         }
@@ -1000,6 +1063,7 @@
             persistState();
             renderAll();
             showToast(`Removed Stamp #${i}`);
+            saveToSheet({ action: 'setStamp', stamp: i, stamped: false, date: '', by: '', note: '' });
             return;
           }
         }
@@ -1027,7 +1091,8 @@
         modal.classList.add('hidden');
         modal.classList.remove('flex');
         renderAll();
-        showToast('Preview card reset to 0 / 50.');
+        showToast('Card reset to 0 / 50.');
+        saveToSheet({ action: 'resetAll' });
       });
 
       document.getElementById('closeStampModalBtn').addEventListener('click', closeStampModal);
@@ -1035,15 +1100,17 @@
 
       document.getElementById('saveStampModalBtn').addEventListener('click', () => {
         if (editingStampIndex === null) return;
-        state.stamps[String(editingStampIndex)] = {
+        const idx = editingStampIndex;
+        const updated = {
           by: document.getElementById('stampByInput').value.trim(),
           note: document.getElementById('stampNoteInput').value.trim(),
           date: document.getElementById('stampDateInput').value || todayISO()
         };
+        state.stamps[String(idx)] = updated;
         persistState();
         closeStampModal();
         renderAll();
-        showToast('Stamp details updated.');
+        saveToSheet({ action: 'setStamp', stamp: idx, stamped: true, ...updated });
       });
 
       document.getElementById('removeStampBtn').addEventListener('click', () => {
@@ -1054,6 +1121,7 @@
         closeStampModal();
         renderAll();
         showToast(`Removed Stamp #${removedNum}.`);
+        saveToSheet({ action: 'setStamp', stamp: removedNum, stamped: false, date: '', by: '', note: '' });
       });
 
       document.getElementById('editTitleBtn').addEventListener('click', () => {
@@ -1091,7 +1159,7 @@
         persistState();
         closeTitleModal();
         renderAll();
-        showToast('Card settings saved.');
+        saveToSheet({ action: 'setPrizes', prizes: state.prizes });
       });
 
       document.getElementById('shareBtn').addEventListener('click', () => {
@@ -1116,12 +1184,10 @@
         window.print();
       });
 
-      // Auto-sync when viewer returns to the tab
       window.addEventListener('focus', () => {
         syncFromSheet(false);
       });
 
-      // Initial render + silent live sync
       renderAll();
       syncFromSheet(false);
     })();
