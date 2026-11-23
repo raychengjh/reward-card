@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Friends &amp; Family 50-Stamp Reward Card</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    :root {
+      --paper: #fdfbf7;
+      --card: #ffffff;
+      --ink: #2c221e;
+      --muted: #76655d;
+      --terracotta: #c85a3f;
+      --terracotta-dark: #a6442c;
+      --gold: #d99b26;
+      --sage: #2e7d5b;
+      --border: #eadfd6;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--paper);
+      color: var(--ink);
+      background-image: radial-gradient(#e7dcd2 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    .loyalty-shell {
+      background: linear-gradient(180deg, #ffffff 0%, #fffaf5 100%);
+      border: 2px solid var(--border);
+      box-shadow: 0 18px 40px -20px rgba(44, 34, 30, 0.16);
+    }
+
+    .stitched-panel {
+      border: 2px dashed #e2d1c3;
+      background-color: #fffdf9;
+    }
+
+    .stamp-slot {
+      position: relative;
+      transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+    }
+
+    .stamp-slot:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px -6px rgba(200, 90, 63, 0.32);
+    }
+
+    .stamp-slot:active:not(:disabled) {
+      transform: scale(0.95);
+    }
+
+    .stamp-ink {
+      animation: stampPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes stampPop {
+      0% {
+        transform: scale(1.65) rotate(-18deg);
+        opacity: 0;
+      }
+      70% {
+        transform: scale(0.94) rotate(-6deg);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1) rotate(-8deg);
+        opacity: 1;
+      }
+    }
+
+    .stamp-seal {
+      transform: rotate(-8deg);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.45);
+    }
+
+    .progress-fill {
+      transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+      background: linear-gradient(90deg, #d97757 0%, #c85a3f 55%, #d99b26 100%);
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .spin-icon {
+      animation: spin 0.9s linear infinite;
+    }
+
+    @media print {
+      body {
+        background: #ffffff !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .loyalty-shell {
+        box-shadow: none !important;
+        border: 1px solid #d4c5b8 !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased selection:bg-orange-100 selection:text-orange-900">
+  <div class="max-w-5xl mx-auto px-4 py-6 sm:py-9">
+    <!-- Live Google Sheet Sync Bar -->
+    <div class="no-print mb-4 flex flex-wrap items-center justify-between gap-2.5 bg-white/95 border border-[#eadfd6] rounded-2xl px-4 py-2.5 shadow-sm">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <span id="syncStatusDot" class="w-2.5 h-2.5 rounded-full bg-[#d99b26] shrink-0"></span>
+        <span id="syncStatusText" class="text-xs sm:text-sm font-semibold text-[#2c221e] truncate">Connecting to Google Sheet...</span>
+        <span id="syncTimestamp" class="hidden sm:inline text-xs text-[#8c786e]"></span>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button id="syncNowBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-[#eadfd6] bg-[#fffaf5] text-[#2c221e] hover:bg-[#f7ece2] transition">
+          <i id="syncIcon" data-lucide="refresh-cw" class="w-3.5 h-3.5 text-[#c85a3f]"></i>
+          <span>Refresh</span>
+        </button>
+        <a id="openSheetLink" href="https://docs.google.com/spreadsheets/d/1DODwm37VwCdAufezpVz1Sa2sDWHqMPtMeS1bdWiPLEc/edit?usp=drivesdk" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-[#eadfd6] bg-white text-[#5a4a42] hover:bg-[#fcf6f0] transition">
+          <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+          <span>Open Sheet</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Top Utility Bar -->
+    <div class="no-print flex flex-wrap items-center justify-between gap-3 mb-5">
+      <div class="inline-flex items-center gap-1 bg-white border border-[#eadfd6] rounded-full p-1 shadow-sm">
+        <button id="tabCardBtn" type="button" class="px-4 py-1.5 rounded-full text-sm font-semibold transition bg-[#c85a3f] text-white">
+          Stamp Card
+        </button>
+        <button id="tabLogBtn" type="button" class="px-4 py-1.5 rounded-full text-sm font-semibold transition text-[#76655d] hover:text-[#2c221e]">
+          Stamp History <span id="logCountBadge" class="ml-1 inline-flex items-center justify-center text-xs px-1.5 py-0.5 rounded-full bg-[#f4ebe3] text-[#76655d]">0</span>
+        </button>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button id="modeToggleBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-[#eadfd6] bg-white text-[#2c221e] hover:bg-[#fcf6f0] transition shadow-sm">
+          <i data-lucide="lock" class="w-4 h-4 text-[#76655d]"></i>
+          <span id="modeToggleLabel">View-Only Mode</span>
+        </button>
+        <button id="shareBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-[#2c221e] text-white hover:bg-[#42342e] transition shadow-sm">
+          <i data-lucide="share-2" class="w-4 h-4"></i>
+          <span>Share Link</span>
+        </button>
+        <button id="printBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-[#eadfd6] bg-white text-[#2c221e] hover:bg-[#fcf6f0] transition shadow-sm" title="Print or Save as PDF">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Print</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Reward Card Shell -->
+    <main class="loyalty-shell rounded-3xl p-5 sm:p-8">
+      <!-- Header -->
+      <header class="flex flex-col md:flex-row md:items-start md:justify-between gap-5 pb-6 border-b border-[#f0e5dc]">
+        <div class="space-y-2 flex-1 min-w-0">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#fdf1eb] text-[#b44b32] text-xs font-bold tracking-wide uppercase">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+            <span>50-Stamp Collectible Card</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <h1 id="cardTitleDisplay" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#2c221e] break-words">
+              Friends &amp; Family Reward Card
+            </h1>
+            <button id="editTitleBtn" type="button" class="no-print p-1.5 rounded-lg text-[#8c786e] hover:text-[#2c221e] hover:bg-[#f6ede5] transition" title="Edit card title &amp; subtitle">
+              <i data-lucide="pencil" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <p id="cardSubtitleDisplay" class="text-sm sm:text-base text-[#76655d]">
+            Collect stamps together to unlock presents at 10, 25, and 50 stamps.
+          </p>
+        </div>
+
+        <!-- Score Counter Pill -->
+        <div class="flex items-center gap-4 bg-[#fff8f2] border border-[#f0dfd1] rounded-2xl px-5 py-3.5 shrink-0">
+          <div class="w-12 h-12 rounded-2xl bg-[#c85a3f] text-white flex items-center justify-center shadow-sm">
+            <i data-lucide="award" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <div class="text-xs font-semibold uppercase tracking-wider text-[#8c786e]">Collected</div>
+            <div class="flex items-baseline gap-1">
+              <span id="stampCountBig" class="text-3xl font-extrabold text-[#2c221e]">0</span>
+              <span class="text-sm font-semibold text-[#8c786e]">/ 50</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Progress Bar & Next Milestone Banner -->
+      <section class="mt-6">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+          <div id="nextMilestoneText" class="text-sm font-semibold text-[#2c221e] flex items-center gap-2">
+            <span class="inline-block w-2 h-2 rounded-full bg-[#c85a3f]"></span>
+            <span>10 more stamps to unlock Small Present</span>
+          </div>
+          <div id="progressPercentText" class="text-sm font-bold text-[#c85a3f]">0%</div>
+        </div>
+
+        <div class="relative pt-1 pb-6">
+          <div class="h-4 w-full bg-[#f3e9e0] rounded-full overflow-hidden p-0.5">
+            <div id="progressBarFill" class="progress-fill h-full rounded-full" style="width: 0%;"></div>
+          </div>
+          <!-- Milestone Tick Markers (20% = 10, 50% = 25, 100% = 50) -->
+          <div class="relative h-5 mt-1 text-[11px] font-semibold text-[#8c786e]">
+            <span class="absolute left-0">0</span>
+            <span class="absolute -translate-x-1/2 text-[#b44b32]" style="left: 20%;">10 🎁</span>
+            <span class="absolute -translate-x-1/2 text-[#b97d14]" style="left: 50%;">25 🎀</span>
+            <span class="absolute right-0 text-[#2e7d5b]">50 🏆</span>
+          </div>
+        </div>
+
+        <!-- 3 Milestone Reward Cards -->
+        <div id="milestonesGrid" class="grid grid-cols-1 md:grid-cols-3 gap-3.5 mt-1">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+
+      <!-- VIEW 1: STAMP CARD GRID -->
+      <section id="cardView" class="mt-7">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-lg font-bold text-[#2c221e]">Collectible Stamps</h2>
+            <p id="gridHintText" class="text-xs sm:text-sm text-[#76655d]">Synced live from Google Sheets. Tap any stamped seal to see details.</p>
+          </div>
+          <div id="organizerActions" class="no-print flex flex-wrap items-center gap-2">
+            <button id="quickStampBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-[#c85a3f] text-white hover:bg-[#a6442c] transition shadow-sm">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+              <span>+1 Stamp</span>
+            </button>
+            <button id="undoStampBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-[#eadfd6] bg-white text-[#2c221e] hover:bg-[#fcf6f0] transition">
+              <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+              <span>Undo</span>
+            </button>
+            <button id="resetCardBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-[#f2d6d0] bg-[#fff7f5] text-[#b44b32] hover:bg-[#fdece8] transition">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+              <span>Reset</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="stitched-panel rounded-2xl p-3.5 sm:p-5">
+          <div id="stampGrid" class="grid grid-cols-5 sm:grid-cols-10 gap-2.5 sm:gap-3">
+            <!-- 50 Stamp Slots Rendered by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: STAMP HISTORY LOG -->
+      <section id="logView" class="mt-7 hidden">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-lg font-bold text-[#2c221e]">Stamp History</h2>
+            <p class="text-xs sm:text-sm text-[#76655d]">Every stamped slot with date, person, and activity note from your Stamp Log.</p>
+          </div>
+          <button id="exportJsonBtn" type="button" class="no-print inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-[#eadfd6] bg-white text-[#2c221e] hover:bg-[#fcf6f0] transition">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>Export Backup</span>
+          </button>
+        </div>
+
+        <div id="logListContainer" class="bg-white border border-[#eadfd6] rounded-2xl overflow-hidden">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+    </main>
+
+    <footer class="no-print text-center text-xs text-[#8c786e] mt-5">
+      Connected to your <strong>Friends &amp; Family 50-Stamp Reward Card</strong> Google Sheet — check off stamps in the Sheet and click <strong>Refresh</strong> (or reload) to update everyone's view.
+    </footer>
+  </div>
+
+  <!-- Stamp Detail / Edit Modal -->
+  <div id="stampModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#eadfd6]">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-[#fdf1eb] text-[#c85a3f] flex items-center justify-center font-extrabold text-sm" id="modalStampNum">#1</div>
+          <div>
+            <h3 class="text-base font-bold text-[#2c221e]" id="modalStampTitle">Stamp Details</h3>
+            <p class="text-xs text-[#76655d]" id="modalStampSubtitle">Local preview edit — update the Google Sheet to sync to all viewers.</p>
+          </div>
+        </div>
+        <button id="closeStampModalBtn" type="button" class="p-1.5 rounded-lg text-[#8c786e] hover:bg-[#f6ede5]">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3.5">
+        <div>
+          <label for="stampByInput" class="block text-xs font-semibold text-[#5a4a42] mb-1">Earned By (optional)</label>
+          <input id="stampByInput" type="text" maxlength="40" placeholder="e.g., Alex, Mom, Sam" class="w-full px-3.5 py-2 rounded-xl border border-[#e3d5ca] text-sm focus:outline-none focus:ring-2 focus:ring-[#c85a3f]/30 focus:border-[#c85a3f]" />
+        </div>
+        <div>
+          <label for="stampNoteInput" class="block text-xs font-semibold text-[#5a4a42] mb-1">Activity / Note (optional)</label>
+          <input id="stampNoteInput" type="text" maxlength="90" placeholder="e.g., Sunday family dinner, helped with errands" class="w-full px-3.5 py-2 rounded-xl border border-[#e3d5ca] text-sm focus:outline-none focus:ring-2 focus:ring-[#c85a3f]/30 focus:border-[#c85a3f]" />
+        </div>
+        <div>
+          <label for="stampDateInput" class="block text-xs font-semibold text-[#5a4a42] mb-1">Date</label>
+          <input id="stampDateInput" type="date" class="w-full px-3.5 py-2 rounded-xl border border-[#e3d5ca] text-sm focus:outline-none focus:ring-2 focus:ring-[#c85a3f]/30 focus:border-[#c85a3f]" />
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between gap-2 mt-6 pt-4 border-t border-[#f2e8df]">
+        <button id="removeStampBtn" type="button" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-[#b44b32] bg-[#fff5f2] hover:bg-[#fde8e3] transition">
+          Remove Stamp
+        </button>
+        <div class="flex items-center gap-2">
+          <button id="cancelStampModalBtn" type="button" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-[#76655d] hover:bg-[#f6ede5] transition">
+            Cancel
+          </button>
+          <button id="saveStampModalBtn" type="button" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-[#c85a3f] text-white hover:bg-[#a6442c] transition">
+            Save Details
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Card Title Modal -->
+  <div id="titleModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#eadfd6]">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-bold text-[#2c221e]">Customize Reward Card</h3>
+        <button id="closeTitleModalBtn" type="button" class="p-1.5 rounded-lg text-[#8c786e] hover:bg-[#f6ede5]">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div class="space-y-3.5">
+        <div>
+          <label for="titleInput" class="block text-xs font-semibold text-[#5a4a42] mb-1">Card Title</label>
+          <input id="titleInput" type="text" maxlength="60" class="w-full px-3.5 py-2 rounded-xl border border-[#e3d5ca] text-sm focus:outline-none focus:ring-2 focus:ring-[#c85a3f]/30 focus:border-[#c85a3f]" />
+        </div>
+        <div>
+          <label for="subtitleInput" class="block text-xs font-semibold text-[#5a4a42] mb-1">Subtitle</label>
+          <input id="subtitleInput" type="text" maxlength="110" class="w-full px-3.5 py-2 rounded-xl border border-[#e3d5ca] text-sm focus:outline-none focus:ring-2 focus:ring-[#c85a3f]/30 focus:border-[#c85a3f]" />
+        </div>
+        <div class="grid grid-cols-1 gap-2.5 pt-1">
+          <div>
+            <label for="prize10Input" class="block text-xs font-semibold text-[#5a4a42] mb-1">10 Stamps Reward</label>
+            <input id="prize10Input" type="text" maxlength="45" class="w-full px-3.5 py-2 rounded-xl border border-[#e3d5ca] text-sm focus:outline-none focus:ring-2 focus:ring-[#c85a3f]/30 focus:border-[#c85a3f]" />
+          </div>
+          <div>
+            <label for="prize25Input" class="block text-xs font-semibold text-[#5a4a42] mb-1">25 Stamps Reward</label>
+            <input id="prize25Input" type="text" maxlength="45" class="w-full px-3.5 py-2 rounded-xl border border-[#e3d5ca] text-sm focus:outline-none focus:ring-2 focus:ring-[#c85a3f]/30 focus:border-[#c85a3f]" />
+          </div>
+          <div>
+            <label for="prize50Input" class="block text-xs font-semibold text-[#5a4a42] mb-1">50 Stamps Reward</label>
+            <input id="prize50Input" type="text" maxlength="45" class="w-full px-3.5 py-2 rounded-xl border border-[#e3d5ca] text-sm focus:outline-none focus:ring-2 focus:ring-[#c85a3f]/30 focus:border-[#c85a3f]" />
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-[#f2e8df]">
+        <button id="cancelTitleModalBtn" type="button" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-[#76655d] hover:bg-[#f6ede5] transition">Cancel</button>
+        <button id="saveTitleModalBtn" type="button" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-[#c85a3f] text-white hover:bg-[#a6442c] transition">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share Link Modal -->
+  <div id="shareModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#eadfd6]">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-base font-bold text-[#2c221e]">Share with Friends &amp; Family</h3>
+        <button id="closeShareModalBtn" type="button" class="p-1.5 rounded-lg text-[#8c786e] hover:bg-[#f6ede5]">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <p class="text-xs sm:text-sm text-[#76655d] mb-4">
+        When embedded in Google Sites, simply share your published Google Site URL — it automatically pulls live stamps from your Google Sheet. You can also copy a snapshot link below.
+      </p>
+
+      <label class="flex items-center gap-2.5 p-3 rounded-xl bg-[#fdf8f3] border border-[#f0e2d6] mb-3.5 cursor-pointer">
+        <input id="shareReadOnlyCheckbox" type="checkbox" checked class="w-4 h-4 accent-[#c85a3f] rounded" />
+        <span class="text-xs sm:text-sm font-medium text-[#2c221e]">Open link in <strong>View-Only Mode</strong> for friends &amp; family</span>
+      </label>
+
+      <div class="flex gap-2">
+        <input id="shareLinkInput" type="text" readonly class="flex-1 px-3 py-2 rounded-xl border border-[#e3d5ca] bg-[#faf7f4] text-xs text-[#5a4a42] font-mono truncate" />
+        <button id="copyShareLinkBtn" type="button" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-[#c85a3f] text-white hover:bg-[#a6442c] transition shrink-0">
+          Copy
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset Confirmation Modal -->
+  <div id="resetModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-[#eadfd6]">
+      <h3 class="text-base font-bold text-[#2c221e] mb-2">Reset Preview Stamps?</h3>
+      <p class="text-sm text-[#76655d] mb-5">This clears the local preview stamps back to 0 / 50 (it does not delete stamps in your Google Sheet).</p>
+      <div class="flex justify-end gap-2">
+        <button id="cancelResetBtn" type="button" class="px-3.5 py-2 rounded-xl text-sm font-semibold text-[#76655d] hover:bg-[#f6ede5] transition">Cancel</button>
+        <button id="confirmResetBtn" type="button" class="px-4 py-2 rounded-xl text-sm font-semibold bg-[#b44b32] text-white hover:bg-[#933a24] transition">Yes, Reset Card</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 translate-y-3 transition-all duration-200 bg-[#2c221e] text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-full shadow-lg">
+    Saved!
+  </div>
+
+  <script>
+    (function () {
+      // Connected Google Sheet ID (Friends & Family 50-Stamp Reward Card)
+      const SHEET_ID = '1DODwm37VwCdAufezpVz1Sa2sDWHqMPtMeS1bdWiPLEc';
+      const TOTAL_STAMPS = 50;
+      const STORAGE_KEY = 'ff_reward_card_synced_v2';
+
+      const DEFAULT_STATE = {
+        title: 'Friends & Family Reward Card',
+        subtitle: 'Collect stamps together to unlock presents at 10, 25, and 50 stamps.',
+        readOnly: true,
+        prizes: {
+          10: 'Small Present',
+          25: 'Big Present',
+          50: 'Giant Present'
+        },
+        claimed: {
+          10: false,
+          25: false,
+          50: false
+        },
+        stamps: {} // { "1": { date: "YYYY-MM-DD", by: "", note: "" } }
+      };
+
+      let state = loadInitialState();
+      let activeTab = 'card';
+      let editingStampIndex = null;
+      let lastStampedIndex = null;
+      let toastTimer = null;
+      let isSyncing = false;
+
+      function todayISO() {
+        const d = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      }
+
+      function formatTimeNow() {
+        const d = new Date();
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+
+      function encodeStateToHash(obj) {
+        try {
+          const json = JSON.stringify(obj);
+          const bytes = new TextEncoder().encode(json);
+          let bin = '';
+          bytes.forEach((b) => { bin += String.fromCharCode(b); });
+          return '#card=' + encodeURIComponent(btoa(bin));
+        } catch (e) {
+          return '';
+        }
+      }
+
+      function decodeStateFromHash(hashStr) {
+        if (!hashStr || !hashStr.startsWith('#card=')) return null;
+        try {
+          const b64 = decodeURIComponent(hashStr.slice(6));
+          const bin = atob(b64);
+          const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+          const json = new TextDecoder().decode(bytes);
+          const parsed = JSON.parse(json);
+          if (parsed && typeof parsed === 'object') {
+            return normalizeState(parsed);
+          }
+        } catch (e) {
+          return null;
+        }
+        return null;
+      }
+
+      function normalizeState(raw) {
+        return {
+          title: typeof raw.title === 'string' && raw.title.trim() ? raw.title.trim() : DEFAULT_STATE.title,
+          subtitle: typeof raw.subtitle === 'string' && raw.subtitle.trim() ? raw.subtitle.trim() : DEFAULT_STATE.subtitle,
+          readOnly: typeof raw.readOnly === 'boolean' ? raw.readOnly : true,
+          prizes: {
+            10: (raw.prizes && raw.prizes[10]) || DEFAULT_STATE.prizes[10],
+            25: (raw.prizes && raw.prizes[25]) || DEFAULT_STATE.prizes[25],
+            50: (raw.prizes && raw.prizes[50]) || DEFAULT_STATE.prizes[50]
+          },
+          claimed: {
+            10: Boolean(raw.claimed && raw.claimed[10]),
+            25: Boolean(raw.claimed && raw.claimed[25]),
+            50: Boolean(raw.claimed && raw.claimed[50])
+          },
+          stamps: raw.stamps && typeof raw.stamps === 'object' ? raw.stamps : {}
+        };
+      }
+
+      function loadInitialState() {
+        const fromHash = decodeStateFromHash(window.location.hash);
+        if (fromHash) return fromHash;
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) return normalizeState(JSON.parse(saved));
+        } catch (e) {
+          // Storage blocked in restricted contexts; fall back to in-memory default
+        }
+        return normalizeState(DEFAULT_STATE);
+      }
+
+      function persistState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (e) {
+          // Ignore storage errors safely
+        }
+      }
+
+      function parseGvizJson(rawText) {
+        const start = rawText.indexOf('{');
+        const end = rawText.lastIndexOf('}');
+        if (start === -1 || end === -1 || end <= start) {
+          throw new Error('Unexpected response format from Google Sheets.');
+        }
+        return JSON.parse(rawText.slice(start, end + 1));
+      }
+
+      function cellValue(row, colIndex) {
+        if (!row || !row.c || !row.c[colIndex]) return null;
+        const cell = row.c[colIndex];
+        if (cell.f !== undefined && cell.f !== null && typeof cell.v !== 'boolean') {
+          return cell.f;
+        }
+        return cell.v !== undefined ? cell.v : null;
+      }
+
+      function isTruthyCheckbox(val) {
+        if (val === true) return true;
+        if (typeof val === 'string') {
+          return val.trim().toUpperCase() === 'TRUE';
+        }
+        return false;
+      }
+
+      function setSyncIndicator(status, message) {
+        const dot = document.getElementById('syncStatusDot');
+        const text = document.getElementById('syncStatusText');
+        const ts = document.getElementById('syncTimestamp');
+        const icon = document.getElementById('syncIcon');
+
+        text.textContent = message;
+        if (status === 'loading') {
+          dot.className = 'w-2.5 h-2.5 rounded-full bg-[#d99b26] shrink-0';
+          if (icon) icon.classList.add('spin-icon');
+        } else if (status === 'live') {
+          dot.className = 'w-2.5 h-2.5 rounded-full bg-[#2e7d5b] shrink-0';
+          ts.textContent = `· Updated ${formatTimeNow()}`;
+          if (icon) icon.classList.remove('spin-icon');
+        } else {
+          dot.className = 'w-2.5 h-2.5 rounded-full bg-[#c85a3f] shrink-0';
+          ts.textContent = '';
+          if (icon) icon.classList.remove('spin-icon');
+        }
+      }
+
+      async function syncFromGoogleSheet(showFeedback) {
+        if (isSyncing) return;
+        isSyncing = true;
+        setSyncIndicator('loading', 'Syncing from Google Sheet...');
+
+        const rewardCardUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('Reward Card')}&range=B6:K22&headers=0`;
+        const stampLogUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('Stamp Log')}&range=B5:F55&headers=1`;
+
+        try {
+          const [cardRes, logRes] = await Promise.all([
+            fetch(rewardCardUrl, { cache: 'no-store' }),
+            fetch(stampLogUrl, { cache: 'no-store' })
+          ]);
+
+          if (!cardRes.ok) {
+            throw new Error(`Sheet request failed (${cardRes.status})`);
+          }
+
+          const cardText = await cardRes.text();
+          const cardJson = parseGvizJson(cardText);
+          const cardRows = (cardJson.table && cardJson.table.rows) || [];
+
+          // Parse Stamp Log details (optional enrichment)
+          const logMap = {};
+          if (logRes.ok) {
+            try {
+              const logText = await logRes.text();
+              const logJson = parseGvizJson(logText);
+              const logRows = (logJson.table && logJson.table.rows) || [];
+              logRows.forEach((row) => {
+                const num = Number(cellValue(row, 0));
+                if (Number.isInteger(num) && num >= 1 && num <= TOTAL_STAMPS) {
+                  const rawDate = cellValue(row, 1);
+                  const by = cellValue(row, 2);
+                  const activity = cellValue(row, 3);
+                  const notes = cellValue(row, 4);
+                  const combinedNote = [activity, notes].filter((x) => x && String(x).trim()).join(' — ');
+                  logMap[String(num)] = {
+                    date: rawDate ? String(rawDate).trim() : '',
+                    by: by ? String(by).trim() : '',
+                    note: combinedNote
+                  };
+                }
+              });
+            } catch (e) {
+              // Stamp Log parse failure should not block stamp grid sync
+            }
+          }
+
+          // Parse Milestones (Claimed checkboxes & reward labels) from B6:K22
+          // Columns relative to B: B=0, C=1, D=2, E=3, F=4, G=5 (Milestone), H=6 (Required), I=7 (Reward), J=8 (Status), K=9 (Claimed)
+          const nextClaimed = { 10: false, 25: false, 50: false };
+          const nextPrizes = { ...state.prizes };
+          cardRows.forEach((row) => {
+            const req = Number(cellValue(row, 6));
+            if (req === 10 || req === 25 || req === 50) {
+              const rewardLabel = cellValue(row, 7);
+              if (rewardLabel && String(rewardLabel).trim()) {
+                nextPrizes[req] = String(rewardLabel).replace(/[🎁🏆🎀]/g, '').trim() || nextPrizes[req];
+              }
+              nextClaimed[req] = isTruthyCheckbox(cellValue(row, 9));
+            }
+          });
+
+          // Parse 50 Stamp Checkboxes: look for rows directly following "Stamp 1", "Stamp 11", "Stamp 21", "Stamp 31", "Stamp 41"
+          const nextStamps = {};
+          const stampRowStarts = [1, 11, 21, 31, 41];
+          let foundStampRows = 0;
+
+          for (let r = 0; r < cardRows.length - 1; r++) {
+            const firstLabel = String(cellValue(cardRows[r], 0) || '').trim();
+            const match = firstLabel.match(/^Stamp\s+(\d+)/i);
+            if (match) {
+              const startNum = Number(match[1]);
+              if (stampRowStarts.includes(startNum)) {
+                foundStampRows++;
+                const checkboxRow = cardRows[r + 1];
+                for (let c = 0; c < 10; c++) {
+                  const stampNum = startNum + c;
+                  if (stampNum <= TOTAL_STAMPS && isTruthyCheckbox(cellValue(checkboxRow, c))) {
+                    const logInfo = logMap[String(stampNum)] || {};
+                    nextStamps[String(stampNum)] = {
+                      date: logInfo.date || '',
+                      by: logInfo.by || '',
+                      note: logInfo.note || ''
+                    };
+                  }
+                }
+              }
+            }
+          }
+
+          // Fallback fixed row indices inside B6:K22 (rows 14, 16, 18, 20, 22 -> indices 8, 10, 12, 14, 16)
+          if (foundStampRows === 0) {
+            const fallbackIndices = [8, 10, 12, 14, 16];
+            fallbackIndices.forEach((rowIdx, groupIdx) => {
+              const checkboxRow = cardRows[rowIdx];
+              if (!checkboxRow) return;
+              for (let c = 0; c < 10; c++) {
+                const stampNum = groupIdx * 10 + c + 1;
+                if (isTruthyCheckbox(cellValue(checkboxRow, c))) {
+                  const logInfo = logMap[String(stampNum)] || {};
+                  nextStamps[String(stampNum)] = {
+                    date: logInfo.date || '',
+                    by: logInfo.by || '',
+                    note: logInfo.note || ''
+                  };
+                }
+              }
+            });
+          }
+
+          const prevCount = getStampCount();
+          state.stamps = nextStamps;
+          state.claimed = nextClaimed;
+          state.prizes = nextPrizes;
+          persistState();
+          renderAll();
+
+          const nextCount = getStampCount();
+          setSyncIndicator('live', `Live from Google Sheet (${nextCount}/50 stamps)`);
+          if (showFeedback) {
+            showToast(`Synced ${nextCount} / 50 stamps from Google Sheet!`);
+          }
+          checkMilestoneCelebration(prevCount, nextCount);
+        } catch (err) {
+          setSyncIndicator('offline', 'Offline preview mode — will sync live once embedded on Google Sites');
+          if (showFeedback) {
+            showToast('Could not reach Google Sheet from this preview; using local preview mode.');
+          }
+        } finally {
+          isSyncing = false;
+        }
+      }
+
+      function getStampCount() {
+        return Object.keys(state.stamps).filter((k) => {
+          const n = Number(k);
+          return Number.isInteger(n) && n >= 1 && n <= TOTAL_STAMPS && state.stamps[k];
+        }).length;
+      }
+
+      function showToast(message) {
+        const el = document.getElementById('toast');
+        el.textContent = message;
+        el.classList.remove('opacity-0', 'translate-y-3');
+        el.classList.add('opacity-100', 'translate-y-0');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          el.classList.add('opacity-0', 'translate-y-3');
+          el.classList.remove('opacity-100', 'translate-y-0');
+        }, 2600);
+      }
+
+      function triggerCelebration(isGiant) {
+        if (typeof window.confetti !== 'function') return;
+        try {
+          window.confetti({
+            particleCount: isGiant ? 130 : 70,
+            spread: isGiant ? 95 : 68,
+            origin: { y: 0.65 },
+            colors: ['#c85a3f', '#d99b26', '#2e7d5b', '#f4a261']
+          });
+        } catch (e) {
+          // Ignore animation error
+        }
+      }
+
+      function checkMilestoneCelebration(prevCount, nextCount) {
+        if (prevCount < 10 && nextCount >= 10) {
+          triggerCelebration(false);
+          showToast(`Milestone Unlocked: ${state.prizes[10]} (10 stamps)!`);
+        } else if (prevCount < 25 && nextCount >= 25) {
+          triggerCelebration(false);
+          showToast(`Milestone Unlocked: ${state.prizes[25]} (25 stamps)!`);
+        } else if (prevCount < 50 && nextCount >= 50) {
+          triggerCelebration(true);
+          showToast(`Final Goal Unlocked: ${state.prizes[50]} (50 stamps)!`);
+        }
+      }
+
+      function renderAll() {
+        const count = getStampCount();
+        const pct = Math.round((count / TOTAL_STAMPS) * 100);
+
+        document.getElementById('cardTitleDisplay').textContent = state.title;
+        document.getElementById('cardSubtitleDisplay').textContent = state.subtitle;
+        document.getElementById('stampCountBig').textContent = String(count);
+        document.getElementById('logCountBadge').textContent = String(count);
+        document.getElementById('progressPercentText').textContent = `${pct}%`;
+        document.getElementById('progressBarFill').style.width = `${pct}%`;
+
+        const modeBtn = document.getElementById('modeToggleBtn');
+        const editTitleBtn = document.getElementById('editTitleBtn');
+        const organizerActions = document.getElementById('organizerActions');
+        const gridHint = document.getElementById('gridHintText');
+
+        if (state.readOnly) {
+          modeBtn.innerHTML = `<i data-lucide="lock" class="w-4 h-4 text-[#76655d]"></i><span id="modeToggleLabel">View-Only Mode</span>`;
+          editTitleBtn.classList.add('hidden');
+          organizerActions.classList.add('hidden');
+          gridHint.textContent = 'Synced live from Google Sheets. Tap any stamped seal to view details, or switch to Organizer Mode to preview.';
+        } else {
+          modeBtn.innerHTML = `<i data-lucide="unlock" class="w-4 h-4 text-[#c85a3f]"></i><span id="modeToggleLabel">Organizer Mode</span>`;
+          editTitleBtn.classList.remove('hidden');
+          organizerActions.classList.remove('hidden');
+          gridHint.textContent = 'Preview mode: tap circles to test animations locally. To update everyone, check boxes in your Google Sheet.';
+        }
+
+        const nextEl = document.getElementById('nextMilestoneText');
+        if (count < 10) {
+          nextEl.innerHTML = `<span class="inline-block w-2 h-2 rounded-full bg-[#c85a3f]"></span><span><strong>${10 - count}</strong> more ${10 - count === 1 ? 'stamp' : 'stamps'} to unlock <strong>${escapeHtml(state.prizes[10])}</strong></span>`;
+        } else if (count < 25) {
+          nextEl.innerHTML = `<span class="inline-block w-2 h-2 rounded-full bg-[#d99b26]"></span><span><strong>${25 - count}</strong> more ${25 - count === 1 ? 'stamp' : 'stamps'} to unlock <strong>${escapeHtml(state.prizes[25])}</strong></span>`;
+        } else if (count < 50) {
+          nextEl.innerHTML = `<span class="inline-block w-2 h-2 rounded-full bg-[#2e7d5b]"></span><span><strong>${50 - count}</strong> more ${50 - count === 1 ? 'stamp' : 'stamps'} to unlock <strong>${escapeHtml(state.prizes[50])}</strong></span>`;
+        } else {
+          nextEl.innerHTML = `<span class="inline-block w-2 h-2 rounded-full bg-[#2e7d5b]"></span><span class="text-[#2e7d5b]">All 50 stamps collected — <strong>${escapeHtml(state.prizes[50])}</strong> unlocked!</span>`;
+        }
+
+        renderMilestones(count);
+        renderStampGrid();
+        renderLogList();
+        renderTabs();
+
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+          window.lucide.createIcons();
+        }
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function renderMilestones(count) {
+        const container = document.getElementById('milestonesGrid');
+        const definitions = [
+          { target: 10, tier: 'Milestone 1', icon: '🎁', accent: '#c85a3f', softBg: '#fdf2ee' },
+          { target: 25, tier: 'Milestone 2', icon: '🎀', accent: '#d99b26', softBg: '#fef8eb' },
+          { target: 50, tier: 'Final Goal', icon: '🏆', accent: '#2e7d5b', softBg: '#eef8f3' }
+        ];
+
+        container.innerHTML = definitions.map((m) => {
+          const unlocked = count >= m.target;
+          const claimed = Boolean(state.claimed[m.target]);
+          const remaining = Math.max(0, m.target - count);
+          const prizeName = escapeHtml(state.prizes[m.target]);
+
+          const cardClasses = unlocked
+            ? 'border-[#b7dec9] bg-[#f4fbf7]'
+            : 'border-[#eee2d8] bg-white';
+
+          const statusBadge = claimed
+            ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#2e7d5b] text-white whitespace-nowrap shrink-0">Claimed</span>`
+            : unlocked
+              ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#dff4e8] text-[#1f6346] whitespace-nowrap shrink-0">Unlocked!</span>`
+              : `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#f5ede6] text-[#76655d] whitespace-nowrap shrink-0">${remaining} to go</span>`;
+
+          const claimBtn = unlocked && !state.readOnly
+            ? `<button type="button" data-claim-target="${m.target}" class="no-print mt-3 w-full py-1.5 px-3 rounded-xl text-xs font-semibold transition ${
+                claimed
+                  ? 'bg-white border border-[#cfe5d8] text-[#2e7d5b] hover:bg-[#edf8f2]'
+                  : 'bg-[#2e7d5b] text-white hover:bg-[#236347]'
+              }">${claimed ? 'Mark Unclaimed' : 'Mark as Claimed'}</button>`
+            : '';
+
+          return `
+            <div class="rounded-2xl border p-4 transition ${cardClasses}">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0" style="background-color: ${m.softBg};">${m.icon}</div>
+                  <div>
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-[#8c786e]">${m.tier} · ${m.target} Stamps</div>
+                    <div class="text-sm sm:text-base font-bold text-[#2c221e]">${prizeName}</div>
+                  </div>
+                </div>
+                ${statusBadge}
+              </div>
+              ${claimBtn}
+            </div>
+          `;
+        }).join('');
+
+        container.querySelectorAll('[data-claim-target]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const target = Number(btn.getAttribute('data-claim-target'));
+            state.claimed[target] = !state.claimed[target];
+            persistState();
+            renderAll();
+            showToast(state.claimed[target] ? `${state.prizes[target]} marked as claimed (preview).` : `${state.prizes[target]} marked unclaimed (preview).`);
+          });
+        });
+      }
+
+      function renderStampGrid() {
+        const grid = document.getElementById('stampGrid');
+        const milestoneMeta = {
+          10: { label: 'Small', icon: '🎁', ring: 'border-[#e6a492] bg-[#fff5f1]' },
+          25: { label: 'Big', icon: '🎀', ring: 'border-[#ebc778] bg-[#fffaf0]' },
+          50: { label: 'Giant', icon: '🏆', ring: 'border-[#8ecba9] bg-[#f1faf5]' }
+        };
+
+        let html = '';
+        for (let i = 1; i <= TOTAL_STAMPS; i++) {
+          const entry = state.stamps[String(i)];
+          const isStamped = Boolean(entry);
+          const m = milestoneMeta[i];
+          const justStamped = lastStampedIndex === i;
+
+          if (isStamped) {
+            const sealBg = m
+              ? (i === 50 ? 'bg-[#2e7d5b]' : i === 25 ? 'bg-[#d99b26]' : 'bg-[#c85a3f]')
+              : 'bg-[#c85a3f]';
+            const noteDot = (entry.by || entry.note)
+              ? `<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-white/90" title="Has note"></span>`
+              : '';
+            html += `
+              <button type="button" data-stamp="${i}" class="stamp-slot aspect-square rounded-2xl border-2 border-transparent bg-[#fdf2ec] flex flex-col items-center justify-center p-1 focus:outline-none focus:ring-2 focus:ring-[#c85a3f]/40" aria-label="Stamp ${i} collected">
+                <div class="stamp-seal ${justStamped ? 'stamp-ink' : ''} ${sealBg} text-white w-11 h-11 sm:w-12 sm:h-12 rounded-full flex flex-col items-center justify-center relative shadow-sm">
+                  <span class="text-sm sm:text-base leading-none">${m ? m.icon : '★'}</span>
+                  <span class="text-[10px] font-extrabold leading-tight mt-0.5">#${i}</span>
+                  ${noteDot}
+                </div>
+              </button>
+            `;
+          } else {
+            const baseStyle = m
+              ? `${m.ring} border-dashed`
+              : 'border-[#e4d6c9] border-dashed bg-white hover:border-[#c85a3f]';
+            html += `
+              <button type="button" data-stamp="${i}" ${state.readOnly ? 'disabled' : ''} class="stamp-slot aspect-square rounded-2xl border-2 ${baseStyle} flex flex-col items-center justify-center p-1 focus:outline-none focus:ring-2 focus:ring-[#c85a3f]/40 disabled:cursor-default disabled:opacity-90" aria-label="Stamp ${i} empty">
+                ${m
+                  ? `<span class="text-base leading-none">${m.icon}</span><span class="text-[10px] font-extrabold text-[#5a4a42] mt-0.5">${i} · ${m.label}</span>`
+                  : `<span class="text-xs sm:text-sm font-bold text-[#a38f84]">${i}</span>`
+                }
+              </button>
+            `;
+          }
+        }
+
+        grid.innerHTML = html;
+        lastStampedIndex = null;
+
+        grid.querySelectorAll('[data-stamp]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const idx = Number(btn.getAttribute('data-stamp'));
+            handleStampClick(idx);
+          });
+        });
+      }
+
+      function handleStampClick(idx) {
+        const key = String(idx);
+        const existing = state.stamps[key];
+
+        if (!existing) {
+          if (state.readOnly) return;
+          const prevCount = getStampCount();
+          state.stamps[key] = { date: todayISO(), by: '', note: '' };
+          lastStampedIndex = idx;
+          persistState();
+          const nextCount = getStampCount();
+          renderAll();
+          checkMilestoneCelebration(prevCount, nextCount);
+        } else {
+          if (state.readOnly) {
+            const details = [
+              `Stamp #${idx}`,
+              existing.date ? `on ${existing.date}` : '',
+              existing.by ? `by ${existing.by}` : '',
+              existing.note ? `— ${existing.note}` : ''
+            ].filter(Boolean).join(' ');
+            showToast(details);
+            return;
+          }
+          openStampModal(idx);
+        }
+      }
+
+      function renderLogList() {
+        const container = document.getElementById('logListContainer');
+        const entries = Object.keys(state.stamps)
+          .map((k) => ({ num: Number(k), ...state.stamps[k] }))
+          .filter((e) => Number.isInteger(e.num) && e.num >= 1 && e.num <= TOTAL_STAMPS)
+          .sort((a, b) => b.num - a.num);
+
+        if (entries.length === 0) {
+          container.innerHTML = `
+            <div class="p-8 text-center">
+              <div class="text-2xl mb-2">✨</div>
+              <p class="text-sm font-semibold text-[#2c221e]">No stamps collected yet</p>
+              <p class="text-xs text-[#76655d] mt-1">Check off stamps in your Google Sheet (and add optional rows in the Stamp Log tab) to see them appear here automatically.</p>
+            </div>
+          `;
+          return;
+        }
+
+        const milestoneLabel = (n) => {
+          if (n === 10) return `<span class="ml-1.5 text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#fdf1eb] text-[#b44b32]">Small Present 🎁</span>`;
+          if (n === 25) return `<span class="ml-1.5 text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#fef6e4] text-[#a36f0f]">Big Present 🎀</span>`;
+          if (n === 50) return `<span class="ml-1.5 text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#e6f6ee] text-[#236347]">Giant Present 🏆</span>`;
+          return '';
+        };
+
+        container.innerHTML = `
+          <div class="divide-y divide-[#f2e8df]">
+            ${entries.map((item) => `
+              <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 hover:bg-[#fffaf5] transition">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-9 h-9 rounded-xl bg-[#fdf1eb] text-[#c85a3f] font-extrabold text-xs flex items-center justify-center shrink-0">#${item.num}</div>
+                  <div class="min-w-0">
+                    <div class="text-sm font-semibold text-[#2c221e] flex flex-wrap items-center">
+                      <span>${item.by ? escapeHtml(item.by) : 'Stamp Collected'}</span>
+                      ${milestoneLabel(item.num)}
+                    </div>
+                    <div class="text-xs text-[#76655d] truncate">
+                      ${item.note ? escapeHtml(item.note) : 'No note added'}
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span class="text-xs font-medium text-[#8c786e]">${escapeHtml(item.date || '')}</span>
+                  ${!state.readOnly ? `<button type="button" data-edit-log="${item.num}" class="no-print text-xs font-semibold text-[#c85a3f] hover:underline px-2 py-1">Edit</button>` : ''}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+
+        container.querySelectorAll('[data-edit-log]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            openStampModal(Number(btn.getAttribute('data-edit-log')));
+          });
+        });
+      }
+
+      function renderTabs() {
+        const cardView = document.getElementById('cardView');
+        const logView = document.getElementById('logView');
+        const tabCardBtn = document.getElementById('tabCardBtn');
+        const tabLogBtn = document.getElementById('tabLogBtn');
+
+        if (activeTab === 'card') {
+          cardView.classList.remove('hidden');
+          logView.classList.add('hidden');
+          tabCardBtn.className = 'px-4 py-1.5 rounded-full text-sm font-semibold transition bg-[#c85a3f] text-white';
+          tabLogBtn.className = 'px-4 py-1.5 rounded-full text-sm font-semibold transition text-[#76655d] hover:text-[#2c221e]';
+        } else {
+          cardView.classList.add('hidden');
+          logView.classList.remove('hidden');
+          tabCardBtn.className = 'px-4 py-1.5 rounded-full text-sm font-semibold transition text-[#76655d] hover:text-[#2c221e]';
+          tabLogBtn.className = 'px-4 py-1.5 rounded-full text-sm font-semibold transition bg-[#c85a3f] text-white';
+        }
+      }
+
+      function openStampModal(idx) {
+        editingStampIndex = idx;
+        const entry = state.stamps[String(idx)] || { date: todayISO(), by: '', note: '' };
+        document.getElementById('modalStampNum').textContent = `#${idx}`;
+        document.getElementById('modalStampTitle').textContent = `Stamp #${idx} Details`;
+        document.getElementById('stampByInput').value = entry.by || '';
+        document.getElementById('stampNoteInput').value = entry.note || '';
+        document.getElementById('stampDateInput').value = entry.date || todayISO();
+        const modal = document.getElementById('stampModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      function closeStampModal() {
+        editingStampIndex = null;
+        const modal = document.getElementById('stampModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      function updateShareLinkField() {
+        const readOnlyShare = document.getElementById('shareReadOnlyCheckbox').checked;
+        const payload = { ...state, readOnly: readOnlyShare };
+        const hash = encodeStateToHash(payload);
+        const base = window.location.href.split('#')[0];
+        document.getElementById('shareLinkInput').value = base + hash;
+      }
+
+      function copyTextSafe(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(
+            () => showToast('Share link copied to clipboard!'),
+            () => fallbackCopy(text)
+          );
+        } else {
+          fallbackCopy(text);
+        }
+      }
+
+      function fallbackCopy(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+          showToast('Share link copied to clipboard!');
+        } catch (e) {
+          showToast('Select the link above to copy it.');
+        }
+        document.body.removeChild(ta);
+      }
+
+      // Event Listeners
+      document.getElementById('syncNowBtn').addEventListener('click', () => {
+        syncFromGoogleSheet(true);
+      });
+
+      document.getElementById('tabCardBtn').addEventListener('click', () => {
+        activeTab = 'card';
+        renderTabs();
+      });
+
+      document.getElementById('tabLogBtn').addEventListener('click', () => {
+        activeTab = 'log';
+        renderTabs();
+      });
+
+      document.getElementById('modeToggleBtn').addEventListener('click', () => {
+        state.readOnly = !state.readOnly;
+        persistState();
+        renderAll();
+        showToast(state.readOnly ? 'Switched to View-Only Mode' : 'Switched to Organizer Mode');
+      });
+
+      document.getElementById('quickStampBtn').addEventListener('click', () => {
+        if (state.readOnly) return;
+        for (let i = 1; i <= TOTAL_STAMPS; i++) {
+          if (!state.stamps[String(i)]) {
+            const prev = getStampCount();
+            state.stamps[String(i)] = { date: todayISO(), by: '', note: '' };
+            lastStampedIndex = i;
+            persistState();
+            const next = getStampCount();
+            renderAll();
+            checkMilestoneCelebration(prev, next);
+            return;
+          }
+        }
+        showToast('All 50 stamps are already collected!');
+      });
+
+      document.getElementById('undoStampBtn').addEventListener('click', () => {
+        if (state.readOnly) return;
+        for (let i = TOTAL_STAMPS; i >= 1; i--) {
+          if (state.stamps[String(i)]) {
+            delete state.stamps[String(i)];
+            persistState();
+            renderAll();
+            showToast(`Removed Stamp #${i}`);
+            return;
+          }
+        }
+        showToast('No stamps to undo.');
+      });
+
+      document.getElementById('resetCardBtn').addEventListener('click', () => {
+        const modal = document.getElementById('resetModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      });
+
+      document.getElementById('cancelResetBtn').addEventListener('click', () => {
+        const modal = document.getElementById('resetModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      });
+
+      document.getElementById('confirmResetBtn').addEventListener('click', () => {
+        state.stamps = {};
+        state.claimed = { 10: false, 25: false, 50: false };
+        persistState();
+        const modal = document.getElementById('resetModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        renderAll();
+        showToast('Preview card reset to 0 / 50.');
+      });
+
+      document.getElementById('closeStampModalBtn').addEventListener('click', closeStampModal);
+      document.getElementById('cancelStampModalBtn').addEventListener('click', closeStampModal);
+
+      document.getElementById('saveStampModalBtn').addEventListener('click', () => {
+        if (editingStampIndex === null) return;
+        state.stamps[String(editingStampIndex)] = {
+          by: document.getElementById('stampByInput').value.trim(),
+          note: document.getElementById('stampNoteInput').value.trim(),
+          date: document.getElementById('stampDateInput').value || todayISO()
+        };
+        persistState();
+        closeStampModal();
+        renderAll();
+        showToast('Stamp details updated (local preview).');
+      });
+
+      document.getElementById('removeStampBtn').addEventListener('click', () => {
+        if (editingStampIndex === null) return;
+        const removedNum = editingStampIndex;
+        delete state.stamps[String(removedNum)];
+        persistState();
+        closeStampModal();
+        renderAll();
+        showToast(`Removed Stamp #${removedNum} (local preview).`);
+      });
+
+      document.getElementById('editTitleBtn').addEventListener('click', () => {
+        document.getElementById('titleInput').value = state.title;
+        document.getElementById('subtitleInput').value = state.subtitle;
+        document.getElementById('prize10Input').value = state.prizes[10];
+        document.getElementById('prize25Input').value = state.prizes[25];
+        document.getElementById('prize50Input').value = state.prizes[50];
+        const modal = document.getElementById('titleModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      });
+
+      function closeTitleModal() {
+        const modal = document.getElementById('titleModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      document.getElementById('closeTitleModalBtn').addEventListener('click', closeTitleModal);
+      document.getElementById('cancelTitleModalBtn').addEventListener('click', closeTitleModal);
+
+      document.getElementById('saveTitleModalBtn').addEventListener('click', () => {
+        const newTitle = document.getElementById('titleInput').value.trim();
+        const newSubtitle = document.getElementById('subtitleInput').value.trim();
+        const p10 = document.getElementById('prize10Input').value.trim();
+        const p25 = document.getElementById('prize25Input').value.trim();
+        const p50 = document.getElementById('prize50Input').value.trim();
+        if (newTitle) state.title = newTitle;
+        if (newSubtitle) state.subtitle = newSubtitle;
+        if (p10) state.prizes[10] = p10;
+        if (p25) state.prizes[25] = p25;
+        if (p50) state.prizes[50] = p50;
+        persistState();
+        closeTitleModal();
+        renderAll();
+        showToast('Card settings saved.');
+      });
+
+      document.getElementById('shareBtn').addEventListener('click', () => {
+        updateShareLinkField();
+        const modal = document.getElementById('shareModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      });
+
+      document.getElementById('shareReadOnlyCheckbox').addEventListener('change', updateShareLinkField);
+
+      document.getElementById('closeShareModalBtn').addEventListener('click', () => {
+        const modal = document.getElementById('shareModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      });
+
+      document.getElementById('copyShareLinkBtn').addEventListener('click', () => {
+        copyTextSafe(document.getElementById('shareLinkInput').value);
+      });
+
+      document.getElementById('printBtn').addEventListener('click', () => {
+        window.print();
+      });
+
+      document.getElementById('exportJsonBtn').addEventListener('click', () => {
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'reward-card-backup.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Backup downloaded.');
+      });
+
+      // Auto-sync when viewer returns to the tab
+      window.addEventListener('focus', () => {
+        syncFromGoogleSheet(false);
+      });
+
+      // Initial render + live Google Sheet sync
+      renderAll();
+      syncFromGoogleSheet(false);
+    })();
+  </script>
+</body>
+</html>
