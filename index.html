@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Friends &amp; Family 50-Stamp Reward Card</title>
+  <title>Reward Card</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -162,7 +162,7 @@
             <span>50-Stamp Collectible Card</span>
           </div>
           <h1 id="cardTitleDisplay" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#2c221e] break-words">
-            Friends &amp; Family Reward Card
+            Reward Card
           </h1>
           <p id="cardSubtitleDisplay" class="text-sm sm:text-base text-[#76655d]">
             Collect stamps together to unlock presents at 10, 25, and 50 stamps.
@@ -410,10 +410,10 @@
       const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwYMKEjgMXWea7iMa5KsJT5YZB1RyEcEA2Z8eys58U5bXwXj7Sfyk6pvHRHhQDMGBs/exec';
       const SHEET_ID = '1DODwm37VwCdAufezpVz1Sa2sDWHqMPtMeS1bdWiPLEc';
       const TOTAL_STAMPS = 50;
-      const STORAGE_KEY = 'ff_reward_card_v4';
+      const STORAGE_KEY = 'ff_reward_card_v5';
 
       const DEFAULT_STATE = {
-        title: 'Friends & Family Reward Card',
+        title: 'Reward Card',
         subtitle: 'Collect stamps together to unlock presents at 10, 25, and 50 stamps.',
         prizes: {
           10: 'Small Present',
@@ -505,23 +505,20 @@
 
         setSaveBadge('saving', 'Saving...');
         try {
-          const res = await fetch(APPS_SCRIPT_URL.trim(), {
+          await fetch(APPS_SCRIPT_URL.trim(), {
             method: 'POST',
+            mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({
               password: activePassword || ADMIN_PASSWORD,
               ...payload
             })
           });
-          const data = await res.json();
-          if (!res.ok || !data || !data.ok) {
-            throw new Error((data && data.error) || 'Failed to save to Sheet.');
-          }
-          setSaveBadge('saved', 'Saved to Sheet');
+          setSaveBadge('saved', 'Saved');
           return true;
         } catch (err) {
           setSaveBadge('error', 'Save failed');
-          showToast('Could not save to Sheet. Check your Apps Script URL and password.');
+          showToast('Network error while saving. Please check your connection.');
           return false;
         }
       }
