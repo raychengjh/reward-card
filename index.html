@@ -109,48 +109,44 @@
 </head>
 <body class="min-h-screen antialiased selection:bg-orange-100 selection:text-orange-900">
   <div class="max-w-5xl mx-auto px-4 py-6 sm:py-9">
-    <!-- Live Google Sheet Sync Bar -->
-    <div class="no-print mb-4 flex flex-wrap items-center justify-between gap-2.5 bg-white/95 border border-[#eadfd6] rounded-2xl px-4 py-2.5 shadow-sm">
-      <div class="flex items-center gap-2.5 min-w-0">
-        <span id="syncStatusDot" class="w-2.5 h-2.5 rounded-full bg-[#d99b26] shrink-0"></span>
-        <span id="syncStatusText" class="text-xs sm:text-sm font-semibold text-[#2c221e] truncate">Connecting to Google Sheet...</span>
-        <span id="syncTimestamp" class="hidden sm:inline text-xs text-[#8c786e]"></span>
+    <!-- Minimal Public Top Bar: Refresh + Admin Lock -->
+    <div class="no-print flex items-center justify-end gap-2 mb-4">
+      <button id="syncNowBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-[#eadfd6] bg-white text-[#2c221e] hover:bg-[#fcf6f0] transition shadow-sm">
+        <i id="syncIcon" data-lucide="refresh-cw" class="w-4 h-4 text-[#c85a3f]"></i>
+        <span>Refresh</span>
+      </button>
+      <button id="adminToggleBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-[#eadfd6] bg-white text-[#5a4a42] hover:bg-[#fcf6f0] transition shadow-sm">
+        <i data-lucide="lock" class="w-4 h-4 text-[#8c786e]"></i>
+        <span>Admin</span>
+      </button>
+    </div>
+
+    <!-- Admin Controls Bar (Hidden until password unlocked) -->
+    <div id="adminToolbar" class="no-print hidden mb-4 flex flex-wrap items-center justify-between gap-2.5 bg-[#fff8f3] border border-[#ebc9bc] rounded-2xl px-4 py-3 shadow-sm">
+      <div class="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#a6442c]">
+        <i data-lucide="shield-check" class="w-4 h-4"></i>
+        <span>Admin Mode</span>
       </div>
-      <div class="flex items-center gap-2 shrink-0">
-        <button id="syncNowBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-[#eadfd6] bg-[#fffaf5] text-[#2c221e] hover:bg-[#f7ece2] transition">
-          <i id="syncIcon" data-lucide="refresh-cw" class="w-3.5 h-3.5 text-[#c85a3f]"></i>
-          <span>Refresh</span>
-        </button>
-        <a id="openSheetLink" href="https://docs.google.com/spreadsheets/d/1DODwm37VwCdAufezpVz1Sa2sDWHqMPtMeS1bdWiPLEc/edit?usp=drivesdk" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-[#eadfd6] bg-white text-[#5a4a42] hover:bg-[#fcf6f0] transition">
+      <div class="flex flex-wrap items-center gap-2">
+        <a id="openSheetLink" href="https://docs.google.com/spreadsheets/d/1DODwm37VwCdAufezpVz1Sa2sDWHqMPtMeS1bdWiPLEc/edit?usp=drivesdk" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#2e7d5b] text-white hover:bg-[#236347] transition">
           <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
           <span>Open Sheet</span>
         </a>
-      </div>
-    </div>
-
-    <!-- Top Utility Bar -->
-    <div class="no-print flex flex-wrap items-center justify-between gap-3 mb-5">
-      <div class="inline-flex items-center gap-1 bg-white border border-[#eadfd6] rounded-full p-1 shadow-sm">
-        <button id="tabCardBtn" type="button" class="px-4 py-1.5 rounded-full text-sm font-semibold transition bg-[#c85a3f] text-white">
-          Stamp Card
+        <button id="editTitleBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-[#eadfd6] bg-white text-[#2c221e] hover:bg-[#fcf6f0] transition">
+          <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+          <span>Edit Card</span>
         </button>
-        <button id="tabLogBtn" type="button" class="px-4 py-1.5 rounded-full text-sm font-semibold transition text-[#76655d] hover:text-[#2c221e]">
-          Stamp History <span id="logCountBadge" class="ml-1 inline-flex items-center justify-center text-xs px-1.5 py-0.5 rounded-full bg-[#f4ebe3] text-[#76655d]">0</span>
+        <button id="shareBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-[#eadfd6] bg-white text-[#2c221e] hover:bg-[#fcf6f0] transition">
+          <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+          <span>Share</span>
         </button>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-2">
-        <button id="modeToggleBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-[#eadfd6] bg-white text-[#2c221e] hover:bg-[#fcf6f0] transition shadow-sm">
-          <i data-lucide="lock" class="w-4 h-4 text-[#76655d]"></i>
-          <span id="modeToggleLabel">View-Only Mode</span>
+        <button id="printBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-[#eadfd6] bg-white text-[#2c221e] hover:bg-[#fcf6f0] transition">
+          <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+          <span>Print</span>
         </button>
-        <button id="shareBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-[#2c221e] text-white hover:bg-[#42342e] transition shadow-sm">
-          <i data-lucide="share-2" class="w-4 h-4"></i>
-          <span>Share Link</span>
-        </button>
-        <button id="printBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-[#eadfd6] bg-white text-[#2c221e] hover:bg-[#fcf6f0] transition shadow-sm" title="Print or Save as PDF">
-          <i data-lucide="printer" class="w-4 h-4"></i>
-          <span class="hidden sm:inline">Print</span>
+        <button id="lockAdminBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#2c221e] text-white hover:bg-[#42342e] transition">
+          <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+          <span>Lock</span>
         </button>
       </div>
     </div>
@@ -164,14 +160,9 @@
             <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
             <span>50-Stamp Collectible Card</span>
           </div>
-          <div class="flex items-center gap-2">
-            <h1 id="cardTitleDisplay" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#2c221e] break-words">
-              Friends &amp; Family Reward Card
-            </h1>
-            <button id="editTitleBtn" type="button" class="no-print p-1.5 rounded-lg text-[#8c786e] hover:text-[#2c221e] hover:bg-[#f6ede5] transition" title="Edit card title &amp; subtitle">
-              <i data-lucide="pencil" class="w-4 h-4"></i>
-            </button>
-          </div>
+          <h1 id="cardTitleDisplay" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#2c221e] break-words">
+            Friends &amp; Family Reward Card
+          </h1>
           <p id="cardSubtitleDisplay" class="text-sm sm:text-base text-[#76655d]">
             Collect stamps together to unlock presents at 10, 25, and 50 stamps.
           </p>
@@ -221,14 +212,14 @@
         </div>
       </section>
 
-      <!-- VIEW 1: STAMP CARD GRID -->
-      <section id="cardView" class="mt-7">
+      <!-- 50-Stamp Collectible Grid -->
+      <section class="mt-7">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
             <h2 class="text-lg font-bold text-[#2c221e]">Collectible Stamps</h2>
-            <p id="gridHintText" class="text-xs sm:text-sm text-[#76655d]">Synced live from Google Sheets. Tap any stamped seal to see details.</p>
+            <p id="gridHintText" class="text-xs sm:text-sm text-[#76655d]">Tap any stamped seal to view its details.</p>
           </div>
-          <div id="organizerActions" class="no-print flex flex-wrap items-center gap-2">
+          <div id="organizerActions" class="no-print hidden flex flex-wrap items-center gap-2">
             <button id="quickStampBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-[#c85a3f] text-white hover:bg-[#a6442c] transition shadow-sm">
               <i data-lucide="plus-circle" class="w-4 h-4"></i>
               <span>+1 Stamp</span>
@@ -250,32 +241,39 @@
           </div>
         </div>
       </section>
-
-      <!-- VIEW 2: STAMP HISTORY LOG -->
-      <section id="logView" class="mt-7 hidden">
-        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <div>
-            <h2 class="text-lg font-bold text-[#2c221e]">Stamp History</h2>
-            <p class="text-xs sm:text-sm text-[#76655d]">Every stamped slot with date, person, and activity note from your Stamp Log.</p>
-          </div>
-          <button id="exportJsonBtn" type="button" class="no-print inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-[#eadfd6] bg-white text-[#2c221e] hover:bg-[#fcf6f0] transition">
-            <i data-lucide="download" class="w-4 h-4"></i>
-            <span>Export Backup</span>
-          </button>
-        </div>
-
-        <div id="logListContainer" class="bg-white border border-[#eadfd6] rounded-2xl overflow-hidden">
-          <!-- Rendered by JS -->
-        </div>
-      </section>
     </main>
-
-    <footer class="no-print text-center text-xs text-[#8c786e] mt-5">
-      Connected to your <strong>Friends &amp; Family 50-Stamp Reward Card</strong> Google Sheet — check off stamps in the Sheet and click <strong>Refresh</strong> (or reload) to update everyone's view.
-    </footer>
   </div>
 
-  <!-- Stamp Detail / Edit Modal -->
+  <!-- Admin Password Modal -->
+  <div id="adminModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-[#eadfd6]">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-[#fdf1eb] text-[#c85a3f] flex items-center justify-center">
+            <i data-lucide="lock" class="w-4 h-4"></i>
+          </div>
+          <h3 class="text-base font-bold text-[#2c221e]">Admin Access</h3>
+        </div>
+        <button id="closeAdminModalBtn" type="button" class="p-1.5 rounded-lg text-[#8c786e] hover:bg-[#f6ede5]">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <p class="text-xs sm:text-sm text-[#76655d] mb-4">Enter the admin password to unlock organizer controls.</p>
+      <form id="adminLoginForm" class="space-y-3">
+        <div>
+          <label for="adminPasswordInput" class="block text-xs font-semibold text-[#5a4a42] mb-1">Password</label>
+          <input id="adminPasswordInput" type="password" autocomplete="current-password" placeholder="Enter password" class="w-full px-3.5 py-2.5 rounded-xl border border-[#e3d5ca] text-sm focus:outline-none focus:ring-2 focus:ring-[#c85a3f]/30 focus:border-[#c85a3f]" />
+          <p id="adminErrorText" class="hidden text-xs font-semibold text-[#b44b32] mt-1.5">Incorrect password. Please try again.</p>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button id="cancelAdminModalBtn" type="button" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-[#76655d] hover:bg-[#f6ede5] transition">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-[#c85a3f] text-white hover:bg-[#a6442c] transition">Unlock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Stamp Detail / Edit Modal (Admin only) -->
   <div id="stampModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#eadfd6]">
       <div class="flex items-center justify-between mb-4">
@@ -283,7 +281,7 @@
           <div class="w-9 h-9 rounded-xl bg-[#fdf1eb] text-[#c85a3f] flex items-center justify-center font-extrabold text-sm" id="modalStampNum">#1</div>
           <div>
             <h3 class="text-base font-bold text-[#2c221e]" id="modalStampTitle">Stamp Details</h3>
-            <p class="text-xs text-[#76655d]" id="modalStampSubtitle">Local preview edit — update the Google Sheet to sync to all viewers.</p>
+            <p class="text-xs text-[#76655d]">Local preview edit — update your Sheet to sync to all viewers.</p>
           </div>
         </div>
         <button id="closeStampModalBtn" type="button" class="p-1.5 rounded-lg text-[#8c786e] hover:bg-[#f6ede5]">
@@ -298,7 +296,7 @@
         </div>
         <div>
           <label for="stampNoteInput" class="block text-xs font-semibold text-[#5a4a42] mb-1">Activity / Note (optional)</label>
-          <input id="stampNoteInput" type="text" maxlength="90" placeholder="e.g., Sunday family dinner, helped with errands" class="w-full px-3.5 py-2 rounded-xl border border-[#e3d5ca] text-sm focus:outline-none focus:ring-2 focus:ring-[#c85a3f]/30 focus:border-[#c85a3f]" />
+          <input id="stampNoteInput" type="text" maxlength="90" placeholder="e.g., Sunday family dinner" class="w-full px-3.5 py-2 rounded-xl border border-[#e3d5ca] text-sm focus:outline-none focus:ring-2 focus:ring-[#c85a3f]/30 focus:border-[#c85a3f]" />
         </div>
         <div>
           <label for="stampDateInput" class="block text-xs font-semibold text-[#5a4a42] mb-1">Date</label>
@@ -322,7 +320,7 @@
     </div>
   </div>
 
-  <!-- Edit Card Title Modal -->
+  <!-- Edit Card Title Modal (Admin only) -->
   <div id="titleModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#eadfd6]">
       <div class="flex items-center justify-between mb-4">
@@ -362,24 +360,18 @@
     </div>
   </div>
 
-  <!-- Share Link Modal -->
+  <!-- Share Link Modal (Admin only) -->
   <div id="shareModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#eadfd6]">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="text-base font-bold text-[#2c221e]">Share with Friends &amp; Family</h3>
+        <h3 class="text-base font-bold text-[#2c221e]">Share Reward Card Link</h3>
         <button id="closeShareModalBtn" type="button" class="p-1.5 rounded-lg text-[#8c786e] hover:bg-[#f6ede5]">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
       <p class="text-xs sm:text-sm text-[#76655d] mb-4">
-        When embedded in Google Sites, simply share your published Google Site URL — it automatically pulls live stamps from your Google Sheet. You can also copy a snapshot link below.
+        Share your GitHub Pages URL with friends and family so they can view live stamp progress anytime.
       </p>
-
-      <label class="flex items-center gap-2.5 p-3 rounded-xl bg-[#fdf8f3] border border-[#f0e2d6] mb-3.5 cursor-pointer">
-        <input id="shareReadOnlyCheckbox" type="checkbox" checked class="w-4 h-4 accent-[#c85a3f] rounded" />
-        <span class="text-xs sm:text-sm font-medium text-[#2c221e]">Open link in <strong>View-Only Mode</strong> for friends &amp; family</span>
-      </label>
-
       <div class="flex gap-2">
         <input id="shareLinkInput" type="text" readonly class="flex-1 px-3 py-2 rounded-xl border border-[#e3d5ca] bg-[#faf7f4] text-xs text-[#5a4a42] font-mono truncate" />
         <button id="copyShareLinkBtn" type="button" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-[#c85a3f] text-white hover:bg-[#a6442c] transition shrink-0">
@@ -389,11 +381,11 @@
     </div>
   </div>
 
-  <!-- Reset Confirmation Modal -->
+  <!-- Reset Confirmation Modal (Admin only) -->
   <div id="resetModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-[#eadfd6]">
       <h3 class="text-base font-bold text-[#2c221e] mb-2">Reset Preview Stamps?</h3>
-      <p class="text-sm text-[#76655d] mb-5">This clears the local preview stamps back to 0 / 50 (it does not delete stamps in your Google Sheet).</p>
+      <p class="text-sm text-[#76655d] mb-5">This clears the local preview stamps back to 0 / 50 (it does not delete stamps in your Sheet).</p>
       <div class="flex justify-end gap-2">
         <button id="cancelResetBtn" type="button" class="px-3.5 py-2 rounded-xl text-sm font-semibold text-[#76655d] hover:bg-[#f6ede5] transition">Cancel</button>
         <button id="confirmResetBtn" type="button" class="px-4 py-2 rounded-xl text-sm font-semibold bg-[#b44b32] text-white hover:bg-[#933a24] transition">Yes, Reset Card</button>
@@ -403,20 +395,22 @@
 
   <!-- Toast Notification -->
   <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 translate-y-3 transition-all duration-200 bg-[#2c221e] text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-full shadow-lg">
-    Saved!
+    Updated!
   </div>
 
   <script>
     (function () {
-      // Connected Google Sheet ID (Friends & Family 50-Stamp Reward Card)
+      // =========================================================
+      // SETTINGS — Change ADMIN_PASSWORD to any password you like
+      // =========================================================
+      const ADMIN_PASSWORD = 'admin123';
       const SHEET_ID = '1DODwm37VwCdAufezpVz1Sa2sDWHqMPtMeS1bdWiPLEc';
       const TOTAL_STAMPS = 50;
-      const STORAGE_KEY = 'ff_reward_card_synced_v2';
+      const STORAGE_KEY = 'ff_reward_card_v3';
 
       const DEFAULT_STATE = {
         title: 'Friends & Family Reward Card',
         subtitle: 'Collect stamps together to unlock presents at 10, 25, and 50 stamps.',
-        readOnly: true,
         prizes: {
           10: 'Small Present',
           25: 'Big Present',
@@ -431,7 +425,7 @@
       };
 
       let state = loadInitialState();
-      let activeTab = 'card';
+      let isAdmin = false;
       let editingStampIndex = null;
       let lastStampedIndex = null;
       let toastTimer = null;
@@ -443,45 +437,10 @@
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
       }
 
-      function formatTimeNow() {
-        const d = new Date();
-        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      }
-
-      function encodeStateToHash(obj) {
-        try {
-          const json = JSON.stringify(obj);
-          const bytes = new TextEncoder().encode(json);
-          let bin = '';
-          bytes.forEach((b) => { bin += String.fromCharCode(b); });
-          return '#card=' + encodeURIComponent(btoa(bin));
-        } catch (e) {
-          return '';
-        }
-      }
-
-      function decodeStateFromHash(hashStr) {
-        if (!hashStr || !hashStr.startsWith('#card=')) return null;
-        try {
-          const b64 = decodeURIComponent(hashStr.slice(6));
-          const bin = atob(b64);
-          const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
-          const json = new TextDecoder().decode(bytes);
-          const parsed = JSON.parse(json);
-          if (parsed && typeof parsed === 'object') {
-            return normalizeState(parsed);
-          }
-        } catch (e) {
-          return null;
-        }
-        return null;
-      }
-
       function normalizeState(raw) {
         return {
           title: typeof raw.title === 'string' && raw.title.trim() ? raw.title.trim() : DEFAULT_STATE.title,
           subtitle: typeof raw.subtitle === 'string' && raw.subtitle.trim() ? raw.subtitle.trim() : DEFAULT_STATE.subtitle,
-          readOnly: typeof raw.readOnly === 'boolean' ? raw.readOnly : true,
           prizes: {
             10: (raw.prizes && raw.prizes[10]) || DEFAULT_STATE.prizes[10],
             25: (raw.prizes && raw.prizes[25]) || DEFAULT_STATE.prizes[25],
@@ -497,8 +456,6 @@
       }
 
       function loadInitialState() {
-        const fromHash = decodeStateFromHash(window.location.hash);
-        if (fromHash) return fromHash;
         try {
           const saved = localStorage.getItem(STORAGE_KEY);
           if (saved) return normalizeState(JSON.parse(saved));
@@ -520,7 +477,7 @@
         const start = rawText.indexOf('{');
         const end = rawText.lastIndexOf('}');
         if (start === -1 || end === -1 || end <= start) {
-          throw new Error('Unexpected response format from Google Sheets.');
+          throw new Error('Unexpected response format.');
         }
         return JSON.parse(rawText.slice(start, end + 1));
       }
@@ -542,31 +499,20 @@
         return false;
       }
 
-      function setSyncIndicator(status, message) {
-        const dot = document.getElementById('syncStatusDot');
-        const text = document.getElementById('syncStatusText');
-        const ts = document.getElementById('syncTimestamp');
+      function setSpinning(spinning) {
         const icon = document.getElementById('syncIcon');
-
-        text.textContent = message;
-        if (status === 'loading') {
-          dot.className = 'w-2.5 h-2.5 rounded-full bg-[#d99b26] shrink-0';
-          if (icon) icon.classList.add('spin-icon');
-        } else if (status === 'live') {
-          dot.className = 'w-2.5 h-2.5 rounded-full bg-[#2e7d5b] shrink-0';
-          ts.textContent = `· Updated ${formatTimeNow()}`;
-          if (icon) icon.classList.remove('spin-icon');
+        if (!icon) return;
+        if (spinning) {
+          icon.classList.add('spin-icon');
         } else {
-          dot.className = 'w-2.5 h-2.5 rounded-full bg-[#c85a3f] shrink-0';
-          ts.textContent = '';
-          if (icon) icon.classList.remove('spin-icon');
+          icon.classList.remove('spin-icon');
         }
       }
 
-      async function syncFromGoogleSheet(showFeedback) {
+      async function syncFromSheet(showFeedback) {
         if (isSyncing) return;
         isSyncing = true;
-        setSyncIndicator('loading', 'Syncing from Google Sheet...');
+        setSpinning(true);
 
         const rewardCardUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('Reward Card')}&range=B6:K22&headers=0`;
         const stampLogUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('Stamp Log')}&range=B5:F55&headers=1`;
@@ -578,14 +524,13 @@
           ]);
 
           if (!cardRes.ok) {
-            throw new Error(`Sheet request failed (${cardRes.status})`);
+            throw new Error(`Sync failed (${cardRes.status})`);
           }
 
           const cardText = await cardRes.text();
           const cardJson = parseGvizJson(cardText);
           const cardRows = (cardJson.table && cardJson.table.rows) || [];
 
-          // Parse Stamp Log details (optional enrichment)
           const logMap = {};
           if (logRes.ok) {
             try {
@@ -608,12 +553,10 @@
                 }
               });
             } catch (e) {
-              // Stamp Log parse failure should not block stamp grid sync
+              // Optional details parse error ignored
             }
           }
 
-          // Parse Milestones (Claimed checkboxes & reward labels) from B6:K22
-          // Columns relative to B: B=0, C=1, D=2, E=3, F=4, G=5 (Milestone), H=6 (Required), I=7 (Reward), J=8 (Status), K=9 (Claimed)
           const nextClaimed = { 10: false, 25: false, 50: false };
           const nextPrizes = { ...state.prizes };
           cardRows.forEach((row) => {
@@ -627,7 +570,6 @@
             }
           });
 
-          // Parse 50 Stamp Checkboxes: look for rows directly following "Stamp 1", "Stamp 11", "Stamp 21", "Stamp 31", "Stamp 41"
           const nextStamps = {};
           const stampRowStarts = [1, 11, 21, 31, 41];
           let foundStampRows = 0;
@@ -655,7 +597,6 @@
             }
           }
 
-          // Fallback fixed row indices inside B6:K22 (rows 14, 16, 18, 20, 22 -> indices 8, 10, 12, 14, 16)
           if (foundStampRows === 0) {
             const fallbackIndices = [8, 10, 12, 14, 16];
             fallbackIndices.forEach((rowIdx, groupIdx) => {
@@ -683,18 +624,17 @@
           renderAll();
 
           const nextCount = getStampCount();
-          setSyncIndicator('live', `Live from Google Sheet (${nextCount}/50 stamps)`);
           if (showFeedback) {
-            showToast(`Synced ${nextCount} / 50 stamps from Google Sheet!`);
+            showToast(`Refreshed (${nextCount} / 50 stamps)`);
           }
           checkMilestoneCelebration(prevCount, nextCount);
         } catch (err) {
-          setSyncIndicator('offline', 'Offline preview mode — will sync live once embedded on Google Sites');
           if (showFeedback) {
-            showToast('Could not reach Google Sheet from this preview; using local preview mode.');
+            showToast('Unable to refresh right now.');
           }
         } finally {
           isSyncing = false;
+          setSpinning(false);
         }
       }
 
@@ -714,7 +654,7 @@
         toastTimer = setTimeout(() => {
           el.classList.add('opacity-0', 'translate-y-3');
           el.classList.remove('opacity-100', 'translate-y-0');
-        }, 2600);
+        }, 2500);
       }
 
       function triggerCelebration(isGiant) {
@@ -744,6 +684,14 @@
         }
       }
 
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
       function renderAll() {
         const count = getStampCount();
         const pct = Math.round((count / TOTAL_STAMPS) * 100);
@@ -751,25 +699,24 @@
         document.getElementById('cardTitleDisplay').textContent = state.title;
         document.getElementById('cardSubtitleDisplay').textContent = state.subtitle;
         document.getElementById('stampCountBig').textContent = String(count);
-        document.getElementById('logCountBadge').textContent = String(count);
         document.getElementById('progressPercentText').textContent = `${pct}%`;
         document.getElementById('progressBarFill').style.width = `${pct}%`;
 
-        const modeBtn = document.getElementById('modeToggleBtn');
-        const editTitleBtn = document.getElementById('editTitleBtn');
+        const adminToolbar = document.getElementById('adminToolbar');
+        const adminToggleBtn = document.getElementById('adminToggleBtn');
         const organizerActions = document.getElementById('organizerActions');
         const gridHint = document.getElementById('gridHintText');
 
-        if (state.readOnly) {
-          modeBtn.innerHTML = `<i data-lucide="lock" class="w-4 h-4 text-[#76655d]"></i><span id="modeToggleLabel">View-Only Mode</span>`;
-          editTitleBtn.classList.add('hidden');
-          organizerActions.classList.add('hidden');
-          gridHint.textContent = 'Synced live from Google Sheets. Tap any stamped seal to view details, or switch to Organizer Mode to preview.';
-        } else {
-          modeBtn.innerHTML = `<i data-lucide="unlock" class="w-4 h-4 text-[#c85a3f]"></i><span id="modeToggleLabel">Organizer Mode</span>`;
-          editTitleBtn.classList.remove('hidden');
+        if (isAdmin) {
+          adminToolbar.classList.remove('hidden');
+          adminToggleBtn.classList.add('hidden');
           organizerActions.classList.remove('hidden');
-          gridHint.textContent = 'Preview mode: tap circles to test animations locally. To update everyone, check boxes in your Google Sheet.';
+          gridHint.textContent = 'Admin preview: tap circles to test animations, or click Open Sheet above to save stamps for everyone.';
+        } else {
+          adminToolbar.classList.add('hidden');
+          adminToggleBtn.classList.remove('hidden');
+          organizerActions.classList.add('hidden');
+          gridHint.textContent = 'Tap any stamped seal to view its details.';
         }
 
         const nextEl = document.getElementById('nextMilestoneText');
@@ -785,28 +732,18 @@
 
         renderMilestones(count);
         renderStampGrid();
-        renderLogList();
-        renderTabs();
 
         if (window.lucide && typeof window.lucide.createIcons === 'function') {
           window.lucide.createIcons();
         }
       }
 
-      function escapeHtml(str) {
-        return String(str)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;');
-      }
-
       function renderMilestones(count) {
         const container = document.getElementById('milestonesGrid');
         const definitions = [
-          { target: 10, tier: 'Milestone 1', icon: '🎁', accent: '#c85a3f', softBg: '#fdf2ee' },
-          { target: 25, tier: 'Milestone 2', icon: '🎀', accent: '#d99b26', softBg: '#fef8eb' },
-          { target: 50, tier: 'Final Goal', icon: '🏆', accent: '#2e7d5b', softBg: '#eef8f3' }
+          { target: 10, tier: 'Milestone 1', icon: '🎁', softBg: '#fdf2ee' },
+          { target: 25, tier: 'Milestone 2', icon: '🎀', softBg: '#fef8eb' },
+          { target: 50, tier: 'Final Goal', icon: '🏆', softBg: '#eef8f3' }
         ];
 
         container.innerHTML = definitions.map((m) => {
@@ -825,7 +762,7 @@
               ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#dff4e8] text-[#1f6346] whitespace-nowrap shrink-0">Unlocked!</span>`
               : `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#f5ede6] text-[#76655d] whitespace-nowrap shrink-0">${remaining} to go</span>`;
 
-          const claimBtn = unlocked && !state.readOnly
+          const claimBtn = unlocked && isAdmin
             ? `<button type="button" data-claim-target="${m.target}" class="no-print mt-3 w-full py-1.5 px-3 rounded-xl text-xs font-semibold transition ${
                 claimed
                   ? 'bg-white border border-[#cfe5d8] text-[#2e7d5b] hover:bg-[#edf8f2]'
@@ -856,7 +793,7 @@
             state.claimed[target] = !state.claimed[target];
             persistState();
             renderAll();
-            showToast(state.claimed[target] ? `${state.prizes[target]} marked as claimed (preview).` : `${state.prizes[target]} marked unclaimed (preview).`);
+            showToast(state.claimed[target] ? `${state.prizes[target]} marked as claimed.` : `${state.prizes[target]} marked unclaimed.`);
           });
         });
       }
@@ -897,7 +834,7 @@
               ? `${m.ring} border-dashed`
               : 'border-[#e4d6c9] border-dashed bg-white hover:border-[#c85a3f]';
             html += `
-              <button type="button" data-stamp="${i}" ${state.readOnly ? 'disabled' : ''} class="stamp-slot aspect-square rounded-2xl border-2 ${baseStyle} flex flex-col items-center justify-center p-1 focus:outline-none focus:ring-2 focus:ring-[#c85a3f]/40 disabled:cursor-default disabled:opacity-90" aria-label="Stamp ${i} empty">
+              <button type="button" data-stamp="${i}" ${!isAdmin ? 'disabled' : ''} class="stamp-slot aspect-square rounded-2xl border-2 ${baseStyle} flex flex-col items-center justify-center p-1 focus:outline-none focus:ring-2 focus:ring-[#c85a3f]/40 disabled:cursor-default disabled:opacity-90" aria-label="Stamp ${i} empty">
                 ${m
                   ? `<span class="text-base leading-none">${m.icon}</span><span class="text-[10px] font-extrabold text-[#5a4a42] mt-0.5">${i} · ${m.label}</span>`
                   : `<span class="text-xs sm:text-sm font-bold text-[#a38f84]">${i}</span>`
@@ -923,7 +860,7 @@
         const existing = state.stamps[key];
 
         if (!existing) {
-          if (state.readOnly) return;
+          if (!isAdmin) return;
           const prevCount = getStampCount();
           state.stamps[key] = { date: todayISO(), by: '', note: '' };
           lastStampedIndex = idx;
@@ -932,7 +869,7 @@
           renderAll();
           checkMilestoneCelebration(prevCount, nextCount);
         } else {
-          if (state.readOnly) {
+          if (!isAdmin) {
             const details = [
               `Stamp #${idx}`,
               existing.date ? `on ${existing.date}` : '',
@@ -946,80 +883,19 @@
         }
       }
 
-      function renderLogList() {
-        const container = document.getElementById('logListContainer');
-        const entries = Object.keys(state.stamps)
-          .map((k) => ({ num: Number(k), ...state.stamps[k] }))
-          .filter((e) => Number.isInteger(e.num) && e.num >= 1 && e.num <= TOTAL_STAMPS)
-          .sort((a, b) => b.num - a.num);
-
-        if (entries.length === 0) {
-          container.innerHTML = `
-            <div class="p-8 text-center">
-              <div class="text-2xl mb-2">✨</div>
-              <p class="text-sm font-semibold text-[#2c221e]">No stamps collected yet</p>
-              <p class="text-xs text-[#76655d] mt-1">Check off stamps in your Google Sheet (and add optional rows in the Stamp Log tab) to see them appear here automatically.</p>
-            </div>
-          `;
-          return;
-        }
-
-        const milestoneLabel = (n) => {
-          if (n === 10) return `<span class="ml-1.5 text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#fdf1eb] text-[#b44b32]">Small Present 🎁</span>`;
-          if (n === 25) return `<span class="ml-1.5 text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#fef6e4] text-[#a36f0f]">Big Present 🎀</span>`;
-          if (n === 50) return `<span class="ml-1.5 text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#e6f6ee] text-[#236347]">Giant Present 🏆</span>`;
-          return '';
-        };
-
-        container.innerHTML = `
-          <div class="divide-y divide-[#f2e8df]">
-            ${entries.map((item) => `
-              <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 hover:bg-[#fffaf5] transition">
-                <div class="flex items-center gap-3 min-w-0">
-                  <div class="w-9 h-9 rounded-xl bg-[#fdf1eb] text-[#c85a3f] font-extrabold text-xs flex items-center justify-center shrink-0">#${item.num}</div>
-                  <div class="min-w-0">
-                    <div class="text-sm font-semibold text-[#2c221e] flex flex-wrap items-center">
-                      <span>${item.by ? escapeHtml(item.by) : 'Stamp Collected'}</span>
-                      ${milestoneLabel(item.num)}
-                    </div>
-                    <div class="text-xs text-[#76655d] truncate">
-                      ${item.note ? escapeHtml(item.note) : 'No note added'}
-                    </div>
-                  </div>
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                  <span class="text-xs font-medium text-[#8c786e]">${escapeHtml(item.date || '')}</span>
-                  ${!state.readOnly ? `<button type="button" data-edit-log="${item.num}" class="no-print text-xs font-semibold text-[#c85a3f] hover:underline px-2 py-1">Edit</button>` : ''}
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        `;
-
-        container.querySelectorAll('[data-edit-log]').forEach((btn) => {
-          btn.addEventListener('click', () => {
-            openStampModal(Number(btn.getAttribute('data-edit-log')));
-          });
-        });
+      function openAdminModal() {
+        document.getElementById('adminPasswordInput').value = '';
+        document.getElementById('adminErrorText').classList.add('hidden');
+        const modal = document.getElementById('adminModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => document.getElementById('adminPasswordInput').focus(), 50);
       }
 
-      function renderTabs() {
-        const cardView = document.getElementById('cardView');
-        const logView = document.getElementById('logView');
-        const tabCardBtn = document.getElementById('tabCardBtn');
-        const tabLogBtn = document.getElementById('tabLogBtn');
-
-        if (activeTab === 'card') {
-          cardView.classList.remove('hidden');
-          logView.classList.add('hidden');
-          tabCardBtn.className = 'px-4 py-1.5 rounded-full text-sm font-semibold transition bg-[#c85a3f] text-white';
-          tabLogBtn.className = 'px-4 py-1.5 rounded-full text-sm font-semibold transition text-[#76655d] hover:text-[#2c221e]';
-        } else {
-          cardView.classList.add('hidden');
-          logView.classList.remove('hidden');
-          tabCardBtn.className = 'px-4 py-1.5 rounded-full text-sm font-semibold transition text-[#76655d] hover:text-[#2c221e]';
-          tabLogBtn.className = 'px-4 py-1.5 rounded-full text-sm font-semibold transition bg-[#c85a3f] text-white';
-        }
+      function closeAdminModal() {
+        const modal = document.getElementById('adminModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
       }
 
       function openStampModal(idx) {
@@ -1042,18 +918,10 @@
         modal.classList.remove('flex');
       }
 
-      function updateShareLinkField() {
-        const readOnlyShare = document.getElementById('shareReadOnlyCheckbox').checked;
-        const payload = { ...state, readOnly: readOnlyShare };
-        const hash = encodeStateToHash(payload);
-        const base = window.location.href.split('#')[0];
-        document.getElementById('shareLinkInput').value = base + hash;
-      }
-
       function copyTextSafe(text) {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(text).then(
-            () => showToast('Share link copied to clipboard!'),
+            () => showToast('Link copied to clipboard!'),
             () => fallbackCopy(text)
           );
         } else {
@@ -1070,7 +938,7 @@
         ta.select();
         try {
           document.execCommand('copy');
-          showToast('Share link copied to clipboard!');
+          showToast('Link copied to clipboard!');
         } catch (e) {
           showToast('Select the link above to copy it.');
         }
@@ -1079,28 +947,36 @@
 
       // Event Listeners
       document.getElementById('syncNowBtn').addEventListener('click', () => {
-        syncFromGoogleSheet(true);
+        syncFromSheet(true);
       });
 
-      document.getElementById('tabCardBtn').addEventListener('click', () => {
-        activeTab = 'card';
-        renderTabs();
+      document.getElementById('adminToggleBtn').addEventListener('click', openAdminModal);
+      document.getElementById('closeAdminModalBtn').addEventListener('click', closeAdminModal);
+      document.getElementById('cancelAdminModalBtn').addEventListener('click', closeAdminModal);
+
+      document.getElementById('adminLoginForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const entered = document.getElementById('adminPasswordInput').value;
+        if (entered === ADMIN_PASSWORD) {
+          isAdmin = true;
+          closeAdminModal();
+          renderAll();
+          showToast('Admin mode unlocked.');
+        } else {
+          document.getElementById('adminErrorText').classList.remove('hidden');
+          document.getElementById('adminPasswordInput').focus();
+          document.getElementById('adminPasswordInput').select();
+        }
       });
 
-      document.getElementById('tabLogBtn').addEventListener('click', () => {
-        activeTab = 'log';
-        renderTabs();
-      });
-
-      document.getElementById('modeToggleBtn').addEventListener('click', () => {
-        state.readOnly = !state.readOnly;
-        persistState();
+      document.getElementById('lockAdminBtn').addEventListener('click', () => {
+        isAdmin = false;
         renderAll();
-        showToast(state.readOnly ? 'Switched to View-Only Mode' : 'Switched to Organizer Mode');
+        showToast('Admin mode locked.');
       });
 
       document.getElementById('quickStampBtn').addEventListener('click', () => {
-        if (state.readOnly) return;
+        if (!isAdmin) return;
         for (let i = 1; i <= TOTAL_STAMPS; i++) {
           if (!state.stamps[String(i)]) {
             const prev = getStampCount();
@@ -1117,7 +993,7 @@
       });
 
       document.getElementById('undoStampBtn').addEventListener('click', () => {
-        if (state.readOnly) return;
+        if (!isAdmin) return;
         for (let i = TOTAL_STAMPS; i >= 1; i--) {
           if (state.stamps[String(i)]) {
             delete state.stamps[String(i)];
@@ -1131,6 +1007,7 @@
       });
 
       document.getElementById('resetCardBtn').addEventListener('click', () => {
+        if (!isAdmin) return;
         const modal = document.getElementById('resetModal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -1166,7 +1043,7 @@
         persistState();
         closeStampModal();
         renderAll();
-        showToast('Stamp details updated (local preview).');
+        showToast('Stamp details updated.');
       });
 
       document.getElementById('removeStampBtn').addEventListener('click', () => {
@@ -1176,10 +1053,11 @@
         persistState();
         closeStampModal();
         renderAll();
-        showToast(`Removed Stamp #${removedNum} (local preview).`);
+        showToast(`Removed Stamp #${removedNum}.`);
       });
 
       document.getElementById('editTitleBtn').addEventListener('click', () => {
+        if (!isAdmin) return;
         document.getElementById('titleInput').value = state.title;
         document.getElementById('subtitleInput').value = state.subtitle;
         document.getElementById('prize10Input').value = state.prizes[10];
@@ -1217,13 +1095,12 @@
       });
 
       document.getElementById('shareBtn').addEventListener('click', () => {
-        updateShareLinkField();
+        if (!isAdmin) return;
+        document.getElementById('shareLinkInput').value = window.location.href.split('#')[0];
         const modal = document.getElementById('shareModal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
       });
-
-      document.getElementById('shareReadOnlyCheckbox').addEventListener('change', updateShareLinkField);
 
       document.getElementById('closeShareModalBtn').addEventListener('click', () => {
         const modal = document.getElementById('shareModal');
@@ -1239,27 +1116,14 @@
         window.print();
       });
 
-      document.getElementById('exportJsonBtn').addEventListener('click', () => {
-        const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'reward-card-backup.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showToast('Backup downloaded.');
-      });
-
       // Auto-sync when viewer returns to the tab
       window.addEventListener('focus', () => {
-        syncFromGoogleSheet(false);
+        syncFromSheet(false);
       });
 
-      // Initial render + live Google Sheet sync
+      // Initial render + silent live sync
       renderAll();
-      syncFromGoogleSheet(false);
+      syncFromSheet(false);
     })();
   </script>
 </body>
